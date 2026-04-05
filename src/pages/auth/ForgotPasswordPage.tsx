@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { authApi } from '@/lib/api';
 import { pageCardInner } from '@/lib/pageCardClasses';
 import { btnPrimarySolid, focusRingBidex, textAccentBidex } from '@/lib/theme';
+import { AuthDecoratedPage } from './AuthShell';
 
 const authCardShell =
   'w-full max-w-[420px] rounded-2xl border border-card bg-card shadow-xl overflow-hidden';
@@ -31,8 +32,10 @@ export function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--background)] p-4 sm:p-6">
+    <AuthDecoratedPage>
+      <div className="w-full max-w-[420px]">
       <div className={authCardShell}>
+        <div className="h-px w-full bg-gradient-to-l from-transparent via-[var(--bidex-primary)] to-transparent opacity-90" />
         <div className={`p-6 sm:p-8 ${pageCardInner}`}>
           <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-1">استعادة كلمة المرور</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">أدخل بريدك وسنرسل لك رابطاً لتغيير كلمة المرور.</p>
@@ -50,6 +53,7 @@ export function ForgotPasswordPage() {
           </p>
         </div>
       </div>
-    </div>
+      </div>
+    </AuthDecoratedPage>
   );
 }

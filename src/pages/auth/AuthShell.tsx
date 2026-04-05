@@ -1,8 +1,77 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { Sun, Moon } from 'lucide-react';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { toggleTheme } from '@/store/slices/themeSlice';
+import { BrandWordmark } from '@/components/BrandWordmark';
+import { pageCardInner } from '@/lib/pageCardClasses';
 
+/** حقول الدخول/التسجيل — متوافقة مع `--input-*` والوضعين */
 export const authInputClass =
-  'w-full px-4 py-3 rounded-xl border border-white/[0.1] bg-white/[0.04] text-slate-100 placeholder:text-slate-500 shadow-inner shadow-black/20 transition-[border-color,box-shadow,background-color] duration-200 hover:border-white/[0.14] focus:outline-none focus:ring-2 focus:ring-sky-500/35 focus:border-sky-500/50 focus:bg-white/[0.06]';
+  'w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 shadow-sm transition-[border-color,box-shadow,background-color] duration-200 hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-[color:color-mix(in_srgb,var(--bidex-primary)_32%,transparent)] focus:border-[var(--bidex-primary)] dark:border-[var(--input-border)] dark:bg-[var(--input-bg)] dark:text-slate-100 dark:placeholder:text-slate-500 dark:hover:border-[var(--bidex-primary)]/50';
+
+function AuthBackdropLayers() {
+  return (
+    <>
+      <div
+        className="pointer-events-none fixed inset-0 bg-[var(--background)]"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none fixed inset-0 opacity-90 dark:opacity-100"
+        aria-hidden
+        style={{
+          background:
+            'linear-gradient(200deg, color-mix(in srgb, var(--bidex-primary) 10%, var(--background)) 0%, var(--background) 42%, color-mix(in srgb, var(--card-bg) 85%, var(--background)) 100%)',
+        }}
+      />
+      <div
+        className="pointer-events-none fixed inset-0 hidden dark:block opacity-80"
+        aria-hidden
+        style={{
+          background:
+            'radial-gradient(ellipse 80% 55% at 50% 35%, color-mix(in srgb, var(--bidex-primary) 22%, transparent) 0%, transparent 58%)',
+        }}
+      />
+      <div
+        className="pointer-events-none fixed inset-0 dark:hidden opacity-70"
+        aria-hidden
+        style={{
+          background:
+            'radial-gradient(ellipse 75% 50% at 50% 30%, color-mix(in srgb, var(--bidex-primary) 12%, transparent) 0%, transparent 55%)',
+        }}
+      />
+    </>
+  );
+}
+
+export function AuthThemeToggleButton() {
+  const dispatch = useAppDispatch();
+  const mode = useAppSelector((s) => s.theme.mode);
+  return (
+    <button
+      type="button"
+      onClick={() => dispatch(toggleTheme())}
+      className="fixed top-4 end-4 z-[60] flex h-11 w-11 items-center justify-center rounded-xl border border-card bg-card text-[var(--foreground)] shadow-md transition hover:opacity-90"
+      aria-label={mode === 'dark' ? 'الوضع الفاتح' : 'الوضع الداكن'}
+    >
+      {mode === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+    </button>
+  );
+}
+
+/** خلفية مشتركة + زر الثيم لصفحات استعادة كلمة المرور وغيرها */
+export function AuthDecoratedPage({ children }: { children: ReactNode }) {
+  return (
+    <div className="relative min-h-screen overflow-hidden text-[var(--foreground)]">
+      <AuthBackdropLayers />
+      <AuthThemeToggleButton />
+      <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-10 sm:py-12">
+        {children}
+      </div>
+    </div>
+  );
+}
 
 type AuthShellProps = {
   title: string;
@@ -14,91 +83,50 @@ type AuthShellProps = {
 
 export function AuthShell({ title, subtitle, activeTab, children, footer }: AuthShellProps) {
   return (
-    <div className="relative min-h-screen overflow-hidden text-slate-100 flex items-center justify-center px-4 py-10 sm:py-12">
-      {/* Base: same family as the form card (zinc-950) + slight cool depth */}
-      <div
-        className="pointer-events-none fixed inset-0 bg-zinc-950"
-        style={{
-          backgroundImage:
-            'linear-gradient(165deg, rgb(9 9 11) 0%, rgb(24 24 27 / 0.97) 45%, rgb(15 23 42 / 0.35) 100%)',
-        }}
-      />
-
-      {/* Spotlight behind the form — sky / cyan / indigo = accent strip + inputs focus */}
-      <div className="pointer-events-none fixed inset-0 flex items-center justify-center pt-4">
-        <div
-          className="absolute w-[min(92vw,520px)] h-[min(78vh,560px)] -translate-y-[4%] rounded-[3rem] opacity-90 blur-3xl"
-          style={{
-            background:
-              'radial-gradient(ellipse 72% 58% at 50% 48%, rgba(56, 189, 248, 0.14) 0%, rgba(99, 102, 241, 0.07) 42%, transparent 68%)',
-          }}
-        />
-        <div
-          className="absolute w-[min(110vw,640px)] h-[min(88vh,620px)] -translate-y-[2%] rounded-[3.5rem] opacity-70 blur-[64px]"
-          style={{
-            background:
-              'radial-gradient(ellipse 55% 48% at 50% 52%, rgba(9, 63, 133, 0.22) 0%, rgba(2, 15, 31, 0.12) 50%, transparent 72%)',
-          }}
-        />
-      </div>
-
-      {/* Edge vignette: draws attention to the form block */}
-      <div
-        className="pointer-events-none fixed inset-0"
-        style={{
-          background:
-            'radial-gradient(ellipse 85% 75% at 50% 48%, transparent 0%, transparent 42%, rgba(2, 6, 12, 0.55) 100%)',
-        }}
-      />
-
-      {/* Texture — same grain, lower contrast so it doesn’t fight the form */}
-      <div
-        className="pointer-events-none fixed inset-0 opacity-[0.22] mix-blend-overlay"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E")`,
-        }}
-      />
-
+    <AuthDecoratedPage>
       <div className="relative z-10 w-full max-w-[440px]">
-        <div className="rounded-[1.35rem] border border-white/[0.08] bg-zinc-950/75 shadow-[0_25px_80px_-12px_rgba(0,0,0,0.65),0_0_0_1px_rgba(255,255,255,0.04)_inset] backdrop-blur-2xl ring-1 ring-white/[0.04] overflow-hidden">
-          <div className="h-px w-full bg-gradient-to-l from-transparent via-sky-400/90 to-transparent" />
-          <div className="h-0.5 w-full bg-gradient-to-r from-indigo-500/80 via-sky-400 to-cyan-400/90 opacity-95" />
+        <div className="overflow-hidden rounded-2xl border border-card bg-card shadow-xl">
+          <div className="h-px w-full bg-gradient-to-l from-transparent via-[var(--bidex-primary)] to-transparent opacity-90" />
 
-          <div className="px-6 pt-8 pb-8 sm:px-10 sm:pt-9 sm:pb-10">
+          <div className={`px-6 pt-8 pb-8 sm:px-10 sm:pt-9 sm:pb-10 ${pageCardInner}`}>
             <div className="flex flex-col items-center gap-4 mb-8">
               <div className="relative">
-                <div className="absolute -inset-3 rounded-3xl bg-sky-500/15 blur-2xl" aria-hidden />
-                <div className="relative flex min-h-[3.5rem] items-center justify-center rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.08] to-white/[0.02] px-6 py-3 shadow-lg shadow-black/40">
-                  <span className="logo-mabi3aty text-[0.7rem] sm:text-[0.78rem] tracking-[0.26em] whitespace-nowrap">MABI3ATY</span>
-                </div>
+                <div
+                  className="absolute -inset-3 rounded-3xl opacity-40 blur-2xl dark:opacity-50"
+                  style={{ background: 'color-mix(in srgb, var(--bidex-primary) 25%, transparent)' }}
+                  aria-hidden
+                />
+                <BrandWordmark variant="auth" />
               </div>
               <div className="text-center space-y-1.5 max-w-[20rem]">
-                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-white">{title}</h1>
-                <p className="text-sm text-slate-400 leading-relaxed">{subtitle}</p>
+                <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+                  {title}
+                </h1>
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{subtitle}</p>
               </div>
             </div>
 
-            <div className="mb-7 rounded-2xl bg-black/35 p-1 flex text-sm font-medium border border-white/[0.06] shadow-inner shadow-black/30">
+            <div className="mb-7 flex rounded-2xl border border-card bg-muted p-1 text-sm font-medium shadow-inner gap-1">
               {activeTab === 'login' ? (
-                <span className="flex-1 rounded-[0.65rem] btn-primary py-2.5 text-center shadow-md shadow-sky-950/40">
+                <span className="btn-primary flex-1 rounded-[0.65rem] py-2.5 text-center shadow-sm">
                   تسجيل الدخول
                 </span>
               ) : (
                 <Link
                   to="/login"
-                  className="flex-1 rounded-[0.65rem] py-2.5 text-center text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] transition-colors duration-200"
+                  className="flex-1 rounded-[0.65rem] py-2.5 text-center text-muted transition-colors duration-200 hover:bg-card hover:text-[var(--foreground)]"
                 >
                   تسجيل الدخول
                 </Link>
               )}
               {activeTab === 'register' ? (
-                <span className="flex-1 rounded-[0.65rem] btn-primary py-2.5 text-center shadow-md shadow-sky-950/40">
+                <span className="btn-primary flex-1 rounded-[0.65rem] py-2.5 text-center shadow-sm">
                   إنشاء حساب جديد
                 </span>
               ) : (
                 <Link
                   to="/register"
-                  className="flex-1 rounded-[0.65rem] py-2.5 text-center text-slate-400 hover:text-slate-200 hover:bg-white/[0.05] transition-colors duration-200"
+                  className="flex-1 rounded-[0.65rem] py-2.5 text-center text-muted transition-colors duration-200 hover:bg-card hover:text-[var(--foreground)]"
                 >
                   إنشاء حساب جديد
                 </Link>
@@ -107,14 +135,12 @@ export function AuthShell({ title, subtitle, activeTab, children, footer }: Auth
 
             {children}
 
-            <div className="mt-8 pt-6 border-t border-white/[0.06] text-center text-sm text-slate-400">{footer}</div>
+            <div className="mt-8 border-t border-card pt-6 text-center text-sm text-muted">{footer}</div>
           </div>
         </div>
 
-        <p className="mt-6 text-center text-xs text-slate-600">
-          محمي بتشفير الاتصال · مبيعاتي
-        </p>
+        <p className="mt-6 text-center text-xs text-muted">محمي بتشفير الاتصال · مبيعاتي</p>
       </div>
-    </div>
+    </AuthDecoratedPage>
   );
 }

@@ -7,6 +7,7 @@ const API_BASE =
 
 export const api = axios.create({
   baseURL: API_BASE,
+  timeout: 25_000,
   headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
 });
 
@@ -97,7 +98,8 @@ export const targetsApi = {
 
 // Notifications
 export const notificationsApi = {
-  list: (params?: { page?: number }) => api.get<Paginated<AppNotification>>('/notifications', { params }),
+  list: (params?: { page?: number; per_page?: number }) =>
+    api.get<NotificationsListResponse>('/notifications', { params }),
   markRead: (id: number) => api.post(`/notifications/${id}/read`),
 };
 
@@ -450,6 +452,8 @@ export interface Paginated<T> {
   per_page: number;
   total: number;
 }
+
+export type NotificationsListResponse = Paginated<AppNotification> & { unread_count: number };
 
 export interface AdminDashboard {
   daily_sales: number;

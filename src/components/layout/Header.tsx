@@ -1,18 +1,21 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, Sun, Moon, LogOut } from 'lucide-react';
+import { BrandWordmark } from '@/components/BrandWordmark';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { toggleTheme } from '@/store/slices/themeSlice';
-import { logout } from '@/store/slices/authSlice';
-import { useNavigate } from 'react-router-dom';
-import { authApi } from '@/lib/api';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { useLogout } from '@/hooks/useLogout';
+import { HeaderNotificationsMenu } from '@/components/layout/HeaderNotificationsMenu';
 
 export function Header({ onMenuClick }: { onMenuClick: () => void }) {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
+  const doLogout = useLogout();
   const user = useAppSelector((s) => s.auth.user);
   const mode = useAppSelector((s) => s.theme.mode);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -23,14 +26,14 @@ export function Header({ onMenuClick }: { onMenuClick: () => void }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleLogout = async () => {
+  const openLogoutConfirm = () => {
     setMenuOpen(false);
-    try {
-      await authApi.logout();
-    } finally {
-      dispatch(logout());
-      navigate('/login');
-    }
+    setLogoutConfirmOpen(true);
+  };
+
+  const confirmLogout = () => {
+    setLogoutConfirmOpen(false);
+    void doLogout();
   };
 
   return (
@@ -45,7 +48,7 @@ export function Header({ onMenuClick }: { onMenuClick: () => void }) {
         borderColor: 'var(--card-border)',
       }}
     >
-      <div className="flex items-center justify-between h-12 sm:h-14 px-2 sm:px-4 gap-2">
+      <div className="mx-auto flex h-12 max-w-[1700px] items-center justify-between gap-2 px-3 sm:h-14 sm:px-5 lg:px-6">
         <button
           type="button"
           onClick={onMenuClick}
@@ -55,18 +58,28 @@ export function Header({ onMenuClick }: { onMenuClick: () => void }) {
         >
           <Menu className="w-5 h-5" />
         </button>
-        <Link to="/" className="flex items-center gap-2 min-w-0 no-underline">
-          {/* <img src="/logo.png" alt="مبيعاتي" className="h-[50px] rounded-full sm:h-9 w-auto object-contain shrink-0" /> */}
-          <h1 className="text-lg sm:text-xl font-bold truncate hidden sm:block">
-            <span className="bg-clip-text text-transparent tracking-tight bidex-gradient">
-              مبيعاتي
-            </span>
-          </h1>
+        <Link
+          to="/"
+          aria-label="مبيعاتي — لوحة التحكم"
+          className="flex items-center gap-2 min-w-0 rounded-lg border border-transparent px-1 py-0.5 no-underline hover:border-card hover:bg-muted/40 transition-colors"
+        >
+          <BrandWordmark variant="header" />
         </Link>
         <div className="flex-1 min-w-0" />
+        <HeaderNotificationsMenu
+          open={notifOpen}
+          onToggle={() => {
+            setMenuOpen(false);
+            setNotifOpen((o) => !o);
+          }}
+          onClose={() => setNotifOpen(false)}
+        />
         <button
           type="button"
-          onClick={() => dispatch(toggleTheme())}
+          onClick={() => {
+            setNotifOpen(false);
+            dispatch(toggleTheme());
+          }}
           className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
           style={{ color: 'var(--foreground)' }}
           aria-label="تبديل الوضع"
@@ -76,7 +89,10 @@ export function Header({ onMenuClick }: { onMenuClick: () => void }) {
         <div className="relative" ref={menuRef}>
           <button
             type="button"
-            onClick={() => setMenuOpen((o) => !o)}
+            onClick={() => {
+              setNotifOpen(false);
+              setMenuOpen((o) => !o);
+            }}
             className="p-1.5 rounded-full text-white min-w-[40px] min-h-[40px] flex items-center justify-center"
             style={{ background: 'var(--bidex-primary)' }}
             aria-expanded={menuOpen}
@@ -94,7 +110,7 @@ export function Header({ onMenuClick }: { onMenuClick: () => void }) {
               </div>
               <button
                 type="button"
-                onClick={handleLogout}
+                onClick={openLogoutConfirm}
                 className="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-slate-100 dark:hover:bg-slate-700"
                 style={{ color: 'var(--foreground)' }}
               >
@@ -105,6 +121,16 @@ export function Header({ onMenuClick }: { onMenuClick: () => void }) {
           )}
         </div>
       </div>
+      <ConfirmDialog
+        open={logoutConfirmOpen}
+        title="تأكيد تسجيل الخروج"
+        description="هل تريد تسجيل الخروج؟ ستحتاج لتسجيل الدخول مرة أخرى للوصول إلى حسابك."
+        confirmLabel="تسجيل الخروج"
+        cancelLabel="إلغاء"
+        danger
+        onConfirm={confirmLogout}
+        onCancel={() => setLogoutConfirmOpen(false)}
+      />
     </header>
   );
 }

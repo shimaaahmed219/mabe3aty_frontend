@@ -6,7 +6,8 @@ import { authApi, getApiErrorMessage } from '@/lib/api';
 import { AuthShell, authInputClass } from './AuthShell';
 import { PasswordField } from './PasswordField';
 
-const linkAccent = 'text-sky-400 hover:text-sky-300 font-medium transition-colors';
+const linkAccent =
+  'font-medium text-[var(--bidex-primary)] transition-colors hover:underline dark:text-sky-400 dark:hover:text-sky-300';
 
 export function RegisterPage() {
   const dispatch = useAppDispatch();
@@ -53,7 +54,7 @@ export function RegisterPage() {
     >
       <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
         <div className="space-y-1.5">
-          <label htmlFor="reg-name" className="block text-sm font-medium text-slate-300">
+          <label htmlFor="reg-name" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
             الاسم
           </label>
           <input
@@ -68,7 +69,7 @@ export function RegisterPage() {
           />
         </div>
         <div className="space-y-1.5">
-          <label htmlFor="reg-email" className="block text-sm font-medium text-slate-300">
+          <label htmlFor="reg-email" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
             البريد الإلكتروني
           </label>
           <input
@@ -100,20 +101,20 @@ export function RegisterPage() {
         {error && (
           <p
             role="alert"
-            className="rounded-xl border border-red-500/25 bg-red-500/10 px-3.5 py-2.5 text-sm text-red-200 leading-snug"
+            className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-800 leading-snug dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-200"
           >
             {error}
           </p>
         )}
 
-        <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-500 leading-relaxed">
           باستخدامك للنظام فأنت توافق على شروط الاستخدام وسياسة الخصوصية.
         </p>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full min-h-11 py-3 btn-primary text-[0.95rem] shadow-lg shadow-slate-950/50"
+          className="w-full min-h-11 py-3 btn-primary text-[0.95rem] shadow-md disabled:opacity-60"
         >
           {loading ? 'جاري إنشاء الحساب…' : 'تسجيل حساب جديد'}
         </button>

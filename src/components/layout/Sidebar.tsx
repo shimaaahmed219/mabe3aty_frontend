@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -12,10 +13,12 @@ import {
   MessageCircle,
   Settings,
   ChevronRight,
-  User,
   CalendarClock,
+  LogOut,
 } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { useAppSelector } from '@/store/hooks';
+import { useLogout } from '@/hooks/useLogout';
 
 const menuItems = [
   { to: '/', label: 'لوحة التحكم', icon: LayoutDashboard },
@@ -50,6 +53,18 @@ function SidebarContent({ showCloseButton, onClose }: { showCloseButton: boolean
   const location = useLocation();
   const user = useAppSelector((s) => s.auth.user);
   const isAdmin = useAppSelector((s) => s.auth.user?.role) === 'admin';
+  const doLogout = useLogout();
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+
+  const requestLogout = () => {
+    onClose();
+    setLogoutConfirmOpen(true);
+  };
+
+  const confirmLogout = () => {
+    setLogoutConfirmOpen(false);
+    void doLogout();
+  };
 
   const linkClass = (selected: boolean) =>
     `flex items-center gap-3 w-full px-3 py-2.5 rounded-xl mb-1 text-sm transition-colors ${
@@ -64,29 +79,21 @@ function SidebarContent({ showCloseButton, onClose }: { showCloseButton: boolean
   }));
 
   return (
+    <>
     <div className={sidebarContentClass}>
-      <div className="p-4 border-b border-card flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <div className="p-1.5 rounded-xl bg-muted shrink-0">
-            <User className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: 'var(--foreground)' }} />
-          </div>
-          <div className="min-w-0">
-            <span className="text-base sm:text-lg font-bold block truncate" style={{ color: 'var(--foreground)' }}>مبيعاتي</span>
-            <span className="text-[0.7rem] text-muted block truncate">{user?.email || 'بوابة البائع'}</span>
-          </div>
-        </div>
-        {showCloseButton && (
+      {showCloseButton && (
+        <div className="flex justify-end border-b border-card px-2 py-2">
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 shrink-0"
+            className="p-1.5 rounded-lg hover:bg-muted-bg"
             style={{ color: 'var(--foreground)' }}
-            aria-label="إغلاق"
+            aria-label="إغلاق القائمة"
           >
             <ChevronRight className="w-5 h-5" />
           </button>
-        )}
-      </div>
+        </div>
+      )}
       <nav className="flex-1 px-3 py-3 overflow-auto">
         {itemsBySection.map((section) => (
           <div key={section.title} className="mb-4">
@@ -127,11 +134,33 @@ function SidebarContent({ showCloseButton, onClose }: { showCloseButton: boolean
           <p className="text-sm font-semibold truncate" style={{ color: 'var(--foreground)' }}>{user?.name || 'مستخدم'}</p>
           <p className="text-xs text-muted truncate">{user?.email || ''}</p>
         </div>
-        <Link to="/settings" onClick={onClose} className="p-2 rounded-lg bg-muted border border-card text-[var(--foreground)]" aria-label="الإعدادات">
-          <Settings className="w-4 h-4" />
-        </Link>
+        <div className="flex items-center gap-1 shrink-0">
+          <Link to="/settings" onClick={onClose} className="p-2 rounded-lg bg-muted border border-card text-[var(--foreground)]" aria-label="الإعدادات">
+            <Settings className="w-4 h-4" />
+          </Link>
+          <button
+            type="button"
+            onClick={requestLogout}
+            className="p-2 rounded-lg bg-muted border border-card text-red-600 dark:text-red-400 hover:opacity-90"
+            aria-label="تسجيل الخروج"
+            title="تسجيل الخروج"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </div>
+    <ConfirmDialog
+      open={logoutConfirmOpen}
+      title="تأكيد تسجيل الخروج"
+      description="هل تريد تسجيل الخروج؟ ستحتاج لتسجيل الدخول مرة أخرى للوصول إلى حسابك."
+      confirmLabel="تسجيل الخروج"
+      cancelLabel="إلغاء"
+      danger
+      onConfirm={confirmLogout}
+      onCancel={() => setLogoutConfirmOpen(false)}
+    />
+    </>
   );
 }
 

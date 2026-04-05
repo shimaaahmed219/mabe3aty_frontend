@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# متغيرات البيئة (لا ترفعي .env؛ استخدمي .env.example كقالب)
+.env
+!.env.example
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
