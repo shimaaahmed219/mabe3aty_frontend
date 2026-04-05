@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -8,27 +8,55 @@ import { authApi } from './lib/api';
 import { ThemeInit } from './components/ThemeInit';
 import { ProtectedRoute, AdminRoute } from './components/ProtectedRoute';
 import { AppLayout } from './components/layout/AppLayout';
-import { LoginPage } from './pages/auth/LoginPage';
-import { RegisterPage } from './pages/auth/RegisterPage';
-import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
-import { ResetPasswordPage } from './pages/auth/ResetPasswordPage';
-import { DashboardPage } from './pages/DashboardPage';
-import { InvoicesPage } from './pages/InvoicesPage';
-import { AddSalePage } from './pages/AddSalePage';
-import { NewInvoicePage } from './pages/NewInvoicePage';
-import { InvoiceDetailPage } from './pages/InvoiceDetailPage';
-import { NotificationsPage } from './pages/NotificationsPage';
-import { ReportsPage } from './pages/ReportsPage';
-import { SettingsPage } from './pages/SettingsPage';
-import { SellersPage } from './pages/admin/SellersPage';
-import { ProductsPage } from './pages/admin/ProductsPage';
-import { ProductDetailPage } from './pages/ProductDetailPage';
-import { NearExpiryProductsPage } from './pages/NearExpiryProductsPage';
-import { CustomersPage } from './pages/CustomersPage';
-import { CustomerDetailPage } from './pages/CustomerDetailPage';
-import { CreditDuesPage } from './pages/CreditDuesPage';
-import { LoyaltyPage } from './pages/LoyaltyPage';
-import { ConversationsPage } from './pages/ConversationsPage';
+
+const LoginPage = lazy(() => import('./pages/auth/LoginPage').then((m) => ({ default: m.LoginPage })));
+const RegisterPage = lazy(() => import('./pages/auth/RegisterPage').then((m) => ({ default: m.RegisterPage })));
+const ForgotPasswordPage = lazy(() =>
+  import('./pages/auth/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage })),
+);
+const ResetPasswordPage = lazy(() =>
+  import('./pages/auth/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })),
+);
+const DashboardPage = lazy(() => import('./pages/DashboardPage').then((m) => ({ default: m.DashboardPage })));
+const InvoicesPage = lazy(() => import('./pages/InvoicesPage').then((m) => ({ default: m.InvoicesPage })));
+const AddSalePage = lazy(() => import('./pages/AddSalePage').then((m) => ({ default: m.AddSalePage })));
+const NewInvoicePage = lazy(() => import('./pages/NewInvoicePage').then((m) => ({ default: m.NewInvoicePage })));
+const InvoiceDetailPage = lazy(() =>
+  import('./pages/InvoiceDetailPage').then((m) => ({ default: m.InvoiceDetailPage })),
+);
+const NotificationsPage = lazy(() =>
+  import('./pages/NotificationsPage').then((m) => ({ default: m.NotificationsPage })),
+);
+const ReportsPage = lazy(() => import('./pages/ReportsPage').then((m) => ({ default: m.ReportsPage })));
+const SettingsPage = lazy(() => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
+const SellersPage = lazy(() => import('./pages/admin/SellersPage').then((m) => ({ default: m.SellersPage })));
+const ProductsPage = lazy(() => import('./pages/admin/ProductsPage').then((m) => ({ default: m.ProductsPage })));
+const ProductDetailPage = lazy(() =>
+  import('./pages/ProductDetailPage').then((m) => ({ default: m.ProductDetailPage })),
+);
+const NearExpiryProductsPage = lazy(() =>
+  import('./pages/NearExpiryProductsPage').then((m) => ({ default: m.NearExpiryProductsPage })),
+);
+const CustomersPage = lazy(() => import('./pages/CustomersPage').then((m) => ({ default: m.CustomersPage })));
+const CustomerDetailPage = lazy(() =>
+  import('./pages/CustomerDetailPage').then((m) => ({ default: m.CustomerDetailPage })),
+);
+const CreditDuesPage = lazy(() => import('./pages/CreditDuesPage').then((m) => ({ default: m.CreditDuesPage })));
+const LoyaltyPage = lazy(() => import('./pages/LoyaltyPage').then((m) => ({ default: m.LoyaltyPage })));
+const ConversationsPage = lazy(() =>
+  import('./pages/ConversationsPage').then((m) => ({ default: m.ConversationsPage })),
+);
+
+function RouteFallback() {
+  return (
+    <div className="flex min-h-[50vh] items-center justify-center" role="status" aria-label="جاري التحميل">
+      <div
+        className="h-9 w-9 animate-spin rounded-full border-2 border-slate-200 border-t-[var(--bidex-primary)] dark:border-slate-600 dark:border-t-sky-400"
+        aria-hidden
+      />
+    </div>
+  );
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -67,6 +95,7 @@ function AppRoutes() {
       <ThemeInit />
       <AuthLoader />
       <BrowserRouter>
+        <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
@@ -117,6 +146,7 @@ function AppRoutes() {
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
       </BrowserRouter>
     </>
   );
