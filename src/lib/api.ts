@@ -1,10 +1,7 @@
 import axios, { isAxiosError } from 'axios';
 
 /** في التطوير يُفضّل `/api` ليمر الطلب عبر proxy في Vite (نفس المنفذ 5173) ويتجنب CORS. الباكند يجب أن يعمل: `php artisan serve` على 8000. */
-const API_BASE =
-  import.meta.env.VITE_API_URL ||
-  (import.meta.env.DEV ? '/api' : 'http://localhost:8000/api');
-
+const API_BASE = "https://products-mangment.vercel.app/api"
 export const api = axios.create({
   baseURL: API_BASE,
   timeout: 25_000,
