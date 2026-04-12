@@ -3,21 +3,32 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Save, PackagePlus, Plus, Trash2, ScanLine } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getApiErrorMessage, invoicesApi, productsApi } from '@/lib/api';
+import { focusFirstFieldByValidationKeys, sortAddSaleValidationKeys } from '@/lib/formValidation';
 import { PageWrapper } from '@/components/PageWrapper';
 import { pageCardInner, pageCardShell } from '@/lib/pageCardClasses';
 import { useAppSelector } from '@/store/hooks';
+import { controlInputHover } from '@/lib/theme';
 
 const labelClass =
   'block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5';
 const inputClass =
-  'w-full min-h-[42px] px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-[var(--input-border)] bg-white dark:bg-[var(--input-bg)] text-slate-900 dark:text-slate-100 shadow-sm focus:ring-2 focus:ring-[color:color-mix(in_srgb,var(--bidex-primary)_32%,transparent)] focus:border-[var(--bidex-primary)]';
+  `w-full min-h-[42px] px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-[var(--input-border)] bg-white dark:bg-[var(--input-bg)] text-slate-900 dark:text-slate-100 shadow-sm ${controlInputHover}`;
 const btnPrimarySolid =
   'bg-[var(--bidex-primary)] text-white shadow-sm transition hover:brightness-110 disabled:opacity-60';
 const inputReadOnlyClass =
-  `${inputClass} bg-slate-100 dark:bg-[var(--input-bg)] cursor-default focus:ring-0`;
+  `${inputClass} bg-slate-100 dark:bg-[var(--input-bg)] cursor-default hover:border-slate-300 hover:shadow-none focus-visible:border-slate-300 focus-visible:shadow-none dark:hover:border-[var(--input-border)] dark:focus-visible:border-[var(--input-border)]`;
 /** دفعات الأصناف: خلفية muted البحرية (#07233F في الوضع الداكن) وليس slate-900 */
 const lineCardClass =
   'rounded-2xl border border-card bg-muted p-4 sm:p-5 space-y-4 shadow-sm';
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return (
+    <p className="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
+      {message}
+    </p>
+  );
+}
 
 type Row = {
   productId: number | '';
@@ -40,7 +51,8 @@ export function AddSalePage() {
   const [buyerPhone, setBuyerPhone] = useState('');
   const [buyerAddress, setBuyerAddress] = useState('');
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'paid' | 'partial'>('pending');
-  const [paymentMethod, setPaymentMethod] = useState('');
+  const [paymentMode, setPaymentMode] = useState<'cash' | 'installment'>('cash');
+  const [paymentMethodDetail, setPaymentMethodDetail] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [paidAmount, setPaidAmount] = useState('');
   const [redeemedPoints, setRedeemedPoints] = useState('');
@@ -50,8 +62,34 @@ export function AddSalePage() {
   const [lastSavedPhone, setLastSavedPhone] = useState('');
   const [lastSavedTotal, setLastSavedTotal] = useState<number>(0);
   const [syncingOffline, setSyncingOffline] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const OFFLINE_QUEUE_KEY = 'offline_invoice_queue_v1';
+
+  const clearField = (key: string) => {
+    setFieldErrors((prev) => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    setSubmitError('');
+  }, [rows, saleDate]);
+
+  useEffect(() => {
+    if (paymentMode !== 'cash') return;
+    setDueDate('');
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      delete next.dueDate;
+      delete next.paidAmount;
+      return next;
+    });
+  }, [paymentMode]);
 
   const { data: products = [] } = useQuery({
     queryKey: ['products'],
@@ -73,7 +111,8 @@ export function AddSalePage() {
       setBuyerPhone('');
       setBuyerAddress('');
       setPaymentStatus('pending');
-      setPaymentMethod('');
+      setPaymentMode('cash');
+      setPaymentMethodDetail('');
       setDueDate('');
       setPaidAmount('');
       setRedeemedPoints('');
@@ -245,8 +284,57 @@ export function AddSalePage() {
     setPaidAmount(String(grandNetTotal));
   }, [paymentStatus, grandNetTotal]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const resolvePaymentMethodLabel = () => {
+    const d = paymentMethodDetail.trim();
+    if (paymentMode === 'cash') return d || 'كاش';
+    return d ? `تقسيط — ${d}` : 'تقسيط';
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setSubmitError('');
+    const nextErrors: Record<string, string> = {};
+
+    if (!saleDate?.trim()) {
+      nextErrors.saleDate = 'تاريخ البيع مطلوب.';
+    }
+
+    if (invoiceDiscount.trim() !== '') {
+      const id = parsePrice(invoiceDiscount);
+      if (id === null || id < 0) nextErrors.invoiceDiscount = 'أدخل قيمة خصم صحيحة.';
+    }
+    if (redeemedPoints.trim() !== '') {
+      const rp = Number(redeemedPoints.replace(',', '.'));
+      if (!Number.isFinite(rp) || rp < 0 || !Number.isInteger(rp)) {
+        nextErrors.redeemedPoints = 'أدخل عدد نقاط صحيحاً.';
+      }
+    }
+
+    rows.forEach((row, i) => {
+      const product = products.find((p) => p.id === row.productId);
+      const touched =
+        i === 0 ||
+        Boolean(row.description.trim() || row.productId || row.unitPrice !== '' || row.lineDiscount.trim() !== '');
+      if (!touched) return;
+      if (!row.description.trim()) {
+        nextErrors[`line-${i}-desc`] = 'الوصف أو اسم المنتج مطلوب.';
+      }
+      if (row.quantity <= 0) {
+        nextErrors[`line-${i}-qty`] = 'الكمية يجب أن تكون أكبر من صفر.';
+      }
+      const up = parsePrice(row.unitPrice);
+      const effPrice = up ?? (product?.default_price != null ? Number(product.default_price) : null);
+      if (effPrice == null || effPrice < 0) {
+        nextErrors[`line-${i}-price`] = 'أدخل سعر الوحدة أو اختر منتجاً له سعر.';
+      }
+      if (row.lineDiscount.trim() !== '') {
+        const ld = parsePrice(row.lineDiscount);
+        if (ld === null || ld < 0) {
+          nextErrors[`line-${i}-discount`] = 'قيمة خصم الصنف غير صالحة.';
+        }
+      }
+    });
+
     const items = rows
       .map((row) => {
         const product = products.find((p) => p.id === row.productId);
@@ -264,7 +352,52 @@ export function AddSalePage() {
       })
       .filter((item) => item.description && item.quantity > 0 && item.unit_price >= 0);
 
-    if (items.length === 0) return;
+    if (items.length === 0 && Object.keys(nextErrors).filter((k) => k.startsWith('line-')).length === 0) {
+      nextErrors['line-0-desc'] = 'أدخل صنفاً واحداً صالحاً (وصف، كمية، وسعر).';
+    }
+
+    if (paymentMode === 'installment') {
+      if (!dueDate?.trim()) {
+        nextErrors.dueDate = 'تاريخ الاستحقاق مطلوب للبيع بالتقسيط.';
+      }
+      if (paymentStatus !== 'paid') {
+        if (paidAmount.trim() === '') {
+          nextErrors.paidAmount = 'أدخل المبلغ المدفوع الآن (يمكن 0).';
+        } else {
+          const pa = parsePrice(paidAmount);
+          if (pa === null || pa < 0) nextErrors.paidAmount = 'قيمة المدفوع غير صالحة.';
+        }
+      }
+    } else if (paymentMode === 'cash' && paidAmount.trim() !== '') {
+      const pa = parsePrice(paidAmount);
+      if (pa === null || pa < 0) nextErrors.paidAmount = 'قيمة المدفوع غير صالحة.';
+    }
+
+    if (Object.keys(nextErrors).length > 0) {
+      setFieldErrors(nextErrors);
+      const keys = Object.keys(nextErrors);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          focusFirstFieldByValidationKeys(e.currentTarget, keys, sortAddSaleValidationKeys);
+        });
+      });
+      return;
+    }
+    setFieldErrors({});
+
+    if (items.length === 0) {
+      const emptyItemsErr = {
+        'line-0-desc': 'أضف صنفاً واحداً على الأقل: وصف، كمية أكبر من صفر، وسعر وحدة.',
+      };
+      setFieldErrors(emptyItemsErr);
+      setSubmitError('');
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          focusFirstFieldByValidationKeys(e.currentTarget, Object.keys(emptyItemsErr), sortAddSaleValidationKeys);
+        });
+      });
+      return;
+    }
 
     // تحقق من المخزون لكل صنف
     for (const item of items) {
@@ -277,8 +410,8 @@ export function AddSalePage() {
     const payload: any = {
       sale_date: saleDate,
       payment_status: paymentStatus,
-      payment_method: paymentMethod || undefined,
-      due_date: dueDate || undefined,
+      payment_method: resolvePaymentMethodLabel(),
+      due_date: paymentMode === 'installment' && dueDate ? dueDate : undefined,
       paid_amount: parsePrice(paidAmount) ?? undefined,
       loyalty_points_redeemed: Number(redeemedPoints) > 0 ? Number(redeemedPoints) : undefined,
       discount_amount: parsePrice(invoiceDiscount) ?? undefined,
@@ -396,27 +529,54 @@ export function AddSalePage() {
 
       <div className={pageCardShell}>
         <div className={`p-5 sm:p-6 lg:p-8 ${pageCardInner}`}>
-          <form onSubmit={handleSubmit} className="flex w-full flex-col gap-8">
+          <form noValidate onSubmit={handleSubmit} className="flex w-full flex-col gap-8">
             <section className="space-y-4">
               <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">بيانات المشتري</h3>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="min-w-0">
                   <label className={labelClass}>اسم المشتري</label>
-                  <input type="text" value={buyerName} onChange={(e) => setBuyerName(e.target.value)} className={inputClass} placeholder="اختياري" />
+                  <input
+                    type="text"
+                    value={buyerName}
+                    data-validation-field="buyerName"
+                    onChange={(e) => {
+                      setBuyerName(e.target.value);
+                      clearField('buyerName');
+                    }}
+                    className={`${inputClass}${fieldErrors.buyerName ? ' border-red-500 dark:border-red-400' : ''}`}
+                    placeholder="اختياري"
+                  />
+                  <FieldError message={fieldErrors.buyerName} />
                 </div>
                 <div className="min-w-0">
                   <label className={labelClass}>رقم الهاتف</label>
-                  <input type="tel" value={buyerPhone} onChange={(e) => setBuyerPhone(e.target.value)} className={inputClass} placeholder="اختياري" />
+                  <input
+                    type="tel"
+                    value={buyerPhone}
+                    data-validation-field="buyerPhone"
+                    onChange={(e) => {
+                      setBuyerPhone(e.target.value);
+                      clearField('buyerPhone');
+                    }}
+                    className={`${inputClass}${fieldErrors.buyerPhone ? ' border-red-500 dark:border-red-400' : ''}`}
+                    placeholder="اختياري"
+                  />
+                  <FieldError message={fieldErrors.buyerPhone} />
                 </div>
                 <div className="min-w-0 sm:col-span-2">
                   <label className={labelClass}>عنوان المشتري</label>
                   <input
                     type="text"
                     value={buyerAddress}
-                    onChange={(e) => setBuyerAddress(e.target.value)}
-                    className={inputClass}
+                    data-validation-field="buyerAddress"
+                    onChange={(e) => {
+                      setBuyerAddress(e.target.value);
+                      clearField('buyerAddress');
+                    }}
+                    className={`${inputClass}${fieldErrors.buyerAddress ? ' border-red-500 dark:border-red-400' : ''}`}
                     placeholder="اختياري"
                   />
+                  <FieldError message={fieldErrors.buyerAddress} />
                 </div>
               </div>
             </section>
@@ -457,10 +617,12 @@ export function AddSalePage() {
                           <label className={labelClass}>المنتج</label>
                           <select
                             value={row.productId}
-                            onChange={(e) =>
-                              handleProductChange(index, e.target.value === '' ? '' : Number(e.target.value))
-                            }
-                            className={inputClass}
+                            data-validation-field={`line-${index}-product`}
+                            onChange={(e) => {
+                              handleProductChange(index, e.target.value === '' ? '' : Number(e.target.value));
+                              clearField(`line-${index}-product`);
+                            }}
+                            className={`${inputClass}${fieldErrors[`line-${index}-product`] ? ' border-red-500 dark:border-red-400' : ''}`}
                           >
                             <option value="">— إدخال يدوي —</option>
                             {products.map((p) => (
@@ -470,6 +632,7 @@ export function AddSalePage() {
                               </option>
                             ))}
                           </select>
+                          <FieldError message={fieldErrors[`line-${index}-product`]} />
                           {selectedProduct && (
                             <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
                               المتاح في المخزون: {availableStock != null ? availableStock : 0}
@@ -480,13 +643,18 @@ export function AddSalePage() {
                           <label className={labelClass}>نوع البيع</label>
                           <select
                             value={row.saleType}
-                            onChange={(e) => handleRowChange(index, 'saleType', e.target.value)}
-                            className={inputClass}
+                            data-validation-field={`line-${index}-saleType`}
+                            onChange={(e) => {
+                              handleRowChange(index, 'saleType', e.target.value);
+                              clearField(`line-${index}-saleType`);
+                            }}
+                            className={`${inputClass}${fieldErrors[`line-${index}-saleType`] ? ' border-red-500 dark:border-red-400' : ''}`}
                           >
                             <option value="">اختياري — اختر النوع</option>
                             <option value="cash">كاش</option>
                             <option value="installment">تقسيط</option>
                           </select>
+                          <FieldError message={fieldErrors[`line-${index}-saleType`]} />
                         </div>
                         <div className="min-w-0 lg:col-span-3">
                           <label className={labelClass}>الكمية</label>
@@ -495,10 +663,14 @@ export function AddSalePage() {
                             min={0.01}
                             step={0.01}
                             value={row.quantity}
-                            onChange={(e) => handleRowChange(index, 'quantity', Number(e.target.value) || 0)}
-                            required
-                            className={inputClass}
+                            data-validation-field={`line-${index}-qty`}
+                            onChange={(e) => {
+                              handleRowChange(index, 'quantity', Number(e.target.value) || 0);
+                              clearField(`line-${index}-qty`);
+                            }}
+                            className={`${inputClass}${fieldErrors[`line-${index}-qty`] ? ' border-red-500 dark:border-red-400' : ''}`}
                           />
+                          <FieldError message={fieldErrors[`line-${index}-qty`]} />
                         </div>
 
                         <div className="min-w-0 lg:col-span-6">
@@ -508,10 +680,14 @@ export function AddSalePage() {
                             min={0}
                             step={0.01}
                             value={row.unitPrice}
-                            onChange={(e) => handleRowChange(index, 'unitPrice', e.target.value)}
-                            required
-                            className={inputClass}
+                            data-validation-field={`line-${index}-price`}
+                            onChange={(e) => {
+                              handleRowChange(index, 'unitPrice', e.target.value);
+                              clearField(`line-${index}-price`);
+                            }}
+                            className={`${inputClass}${fieldErrors[`line-${index}-price`] ? ' border-red-500 dark:border-red-400' : ''}`}
                           />
+                          <FieldError message={fieldErrors[`line-${index}-price`]} />
                         </div>
                         <div className="min-w-0 lg:col-span-6">
                           <label className={labelClass}>خصم الصنف (جنيه)</label>
@@ -520,22 +696,31 @@ export function AddSalePage() {
                             min={0}
                             step={0.01}
                             value={row.lineDiscount}
-                            onChange={(e) => handleRowChange(index, 'lineDiscount', e.target.value)}
-                            className={inputClass}
+                            data-validation-field={`line-${index}-discount`}
+                            onChange={(e) => {
+                              handleRowChange(index, 'lineDiscount', e.target.value);
+                              clearField(`line-${index}-discount`);
+                            }}
+                            className={`${inputClass}${fieldErrors[`line-${index}-discount`] ? ' border-red-500 dark:border-red-400' : ''}`}
                             placeholder="0"
                           />
+                          <FieldError message={fieldErrors[`line-${index}-discount`]} />
                         </div>
 
                         <div className="min-w-0 lg:col-span-12">
                           <label className={labelClass}>الوصف / اسم المنتج</label>
                           <textarea
                             value={row.description}
-                            onChange={(e) => handleRowChange(index, 'description', e.target.value)}
-                            required
+                            data-validation-field={`line-${index}-desc`}
+                            onChange={(e) => {
+                              handleRowChange(index, 'description', e.target.value);
+                              clearField(`line-${index}-desc`);
+                            }}
                             rows={2}
-                            className={`${inputClass} min-h-[72px] resize-y py-2.5`}
+                            className={`${inputClass} min-h-[72px] resize-y py-2.5${fieldErrors[`line-${index}-desc`] ? ' border-red-500 dark:border-red-400' : ''}`}
                             placeholder="اسم أو وصف الصنف كما يظهر في الفاتورة"
                           />
+                          <FieldError message={fieldErrors[`line-${index}-desc`]} />
                         </div>
                       </div>
                     </div>
@@ -561,10 +746,15 @@ export function AddSalePage() {
                     min={0}
                     step={0.01}
                     value={invoiceDiscount}
-                    onChange={(e) => setInvoiceDiscount(e.target.value)}
-                    className={inputClass}
+                    data-validation-field="invoiceDiscount"
+                    onChange={(e) => {
+                      setInvoiceDiscount(e.target.value);
+                      clearField('invoiceDiscount');
+                    }}
+                    className={`${inputClass}${fieldErrors.invoiceDiscount ? ' border-red-500 dark:border-red-400' : ''}`}
                     placeholder="0"
                   />
+                  <FieldError message={fieldErrors.invoiceDiscount} />
                 </div>
                 <div className="min-w-0">
                   <label className={labelClass}>نقاط مستبدلة</label>
@@ -573,10 +763,15 @@ export function AddSalePage() {
                     min={0}
                     step={1}
                     value={redeemedPoints}
-                    onChange={(e) => setRedeemedPoints(e.target.value)}
-                    className={inputClass}
+                    data-validation-field="redeemedPoints"
+                    onChange={(e) => {
+                      setRedeemedPoints(e.target.value);
+                      clearField('redeemedPoints');
+                    }}
+                    className={`${inputClass}${fieldErrors.redeemedPoints ? ' border-red-500 dark:border-red-400' : ''}`}
                     placeholder="0"
                   />
+                  <FieldError message={fieldErrors.redeemedPoints} />
                   <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
                     تُخصم من الإجمالي (1 نقطة = 1 جنيه).
                   </p>
@@ -616,70 +811,159 @@ export function AddSalePage() {
               <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">التاريخ والدفع</h3>
               <div className="min-w-0 max-w-md">
                 <label className={labelClass}>تاريخ البيع</label>
-                <input type="date" value={saleDate} onChange={(e) => setSaleDate(e.target.value)} required className={inputClass} />
+                <input
+                  type="date"
+                  value={saleDate}
+                  data-validation-field="saleDate"
+                  onChange={(e) => {
+                    setSaleDate(e.target.value);
+                    clearField('saleDate');
+                  }}
+                  className={`${inputClass}${fieldErrors.saleDate ? ' border-red-500 dark:border-red-400' : ''}`}
+                />
+                <FieldError message={fieldErrors.saleDate} />
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="min-w-0">
                   <label className={labelClass}>حالة الدفع</label>
                   <select
                     value={paymentStatus}
-                    onChange={(e) => setPaymentStatus(e.target.value as typeof paymentStatus)}
-                    className={inputClass}
+                    data-validation-field="paymentStatus"
+                    onChange={(e) => {
+                      setPaymentStatus(e.target.value as typeof paymentStatus);
+                      clearField('paymentStatus');
+                    }}
+                    className={`${inputClass}${fieldErrors.paymentStatus ? ' border-red-500 dark:border-red-400' : ''}`}
                   >
                     <option value="pending">قيد الدفع</option>
                     <option value="paid">مدفوعة بالكامل</option>
                     <option value="partial">مدفوعة جزئيًا</option>
                   </select>
+                  <FieldError message={fieldErrors.paymentStatus} />
                 </div>
                 <div className="min-w-0">
                   <label className={labelClass}>طريقة الدفع</label>
-                  <input
-                    type="text"
-                    value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                    className={inputClass}
-                    placeholder="مثال: كاش، فيزا، تحويل بنكي"
-                  />
-                </div>
-                <div className="min-w-0">
-                  <label className={labelClass}>تاريخ الاستحقاق (للآجل)</label>
-                  <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className={inputClass} />
-                </div>
-                <div className="min-w-0">
-                  <label className={labelClass}>المبلغ المدفوع الآن</label>
-                  <input
-                    type="number"
-                    min={0}
-                    step={0.01}
-                    value={paidAmount}
-                    onChange={(e) => setPaidAmount(e.target.value)}
-                    readOnly={paymentStatus === 'paid'}
-                    className={paymentStatus === 'paid' ? inputReadOnlyClass : inputClass}
-                    placeholder={paymentStatus === 'pending' ? 'اتركه فارغًا أو أدخل المدفوع' : '0'}
-                  />
-                  {paymentStatus === 'paid' && (
-                    <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">يُملأ تلقائيًا بإجمالي الفاتورة.</p>
-                  )}
+                  <select
+                    value={paymentMode}
+                    data-validation-field="paymentMode"
+                    onChange={(e) => {
+                      setPaymentMode(e.target.value as 'cash' | 'installment');
+                      clearField('paymentMode');
+                    }}
+                    className={`${inputClass}${fieldErrors.paymentMode ? ' border-red-500 dark:border-red-400' : ''}`}
+                  >
+                    <option value="cash">كاش</option>
+                    <option value="installment">تقسيط</option>
+                  </select>
+                  <FieldError message={fieldErrors.paymentMode} />
                 </div>
                 <div className="min-w-0 sm:col-span-2">
-                  <label className={labelClass}>
-                    المتبقي على العميل <span className="font-normal text-slate-500">(تلقائي)</span>
-                  </label>
+                  <label className={labelClass}>تفاصيل إضافية لطريقة الدفع (اختياري)</label>
                   <input
                     type="text"
-                    readOnly
-                    tabIndex={-1}
-                    value={`${remainingDue.toLocaleString('ar-EG', { minimumFractionDigits: 2 })} جنيه`}
-                    className={inputReadOnlyClass}
+                    value={paymentMethodDetail}
+                    data-validation-field="paymentMethodDetail"
+                    onChange={(e) => {
+                      setPaymentMethodDetail(e.target.value);
+                      clearField('paymentMethodDetail');
+                    }}
+                    className={`${inputClass}${fieldErrors.paymentMethodDetail ? ' border-red-500 dark:border-red-400' : ''}`}
+                    placeholder="مثال: فيزا، تحويل بنكي، اسم البنك…"
                   />
-                  <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-                    {paymentStatus === 'paid'
-                      ? 'لا يوجد متبقي عند الدفع الكامل.'
-                      : 'الإجمالي − المبلغ المدفوع (إن وُجد).'}
-                  </p>
+                  <FieldError message={fieldErrors.paymentMethodDetail} />
                 </div>
+                {paymentMode === 'installment' && (
+                  <>
+                    <div className="min-w-0">
+                      <label className={labelClass}>
+                        تاريخ الاستحقاق <span className="text-red-600 dark:text-red-400">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        value={dueDate}
+                        data-validation-field="dueDate"
+                        onChange={(e) => {
+                          setDueDate(e.target.value);
+                          clearField('dueDate');
+                        }}
+                        className={`${inputClass}${fieldErrors.dueDate ? ' border-red-500 dark:border-red-400' : ''}`}
+                      />
+                      <FieldError message={fieldErrors.dueDate} />
+                    </div>
+                    <div className="min-w-0">
+                      <label className={labelClass}>
+                        المبلغ المدفوع الآن{' '}
+                        {paymentStatus !== 'paid' && <span className="text-red-600 dark:text-red-400">*</span>}
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        value={paidAmount}
+                        data-validation-field="paidAmount"
+                        onChange={(e) => {
+                          setPaidAmount(e.target.value);
+                          clearField('paidAmount');
+                        }}
+                        readOnly={paymentStatus === 'paid'}
+                        className={
+                          paymentStatus === 'paid'
+                            ? inputReadOnlyClass
+                            : `${inputClass}${fieldErrors.paidAmount ? ' border-red-500 dark:border-red-400' : ''}`
+                        }
+                        placeholder={paymentStatus === 'pending' ? 'أدخل المدفوع (يمكن 0)' : '0'}
+                      />
+                      <FieldError message={fieldErrors.paidAmount} />
+                      {paymentStatus === 'paid' && (
+                        <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">يُملأ تلقائيًا بإجمالي الفاتورة.</p>
+                      )}
+                    </div>
+                    <div className="min-w-0 sm:col-span-2">
+                      <label className={labelClass}>
+                        المتبقي على العميل <span className="font-normal text-slate-500">(تلقائي)</span>
+                      </label>
+                      <input
+                        type="text"
+                        readOnly
+                        tabIndex={-1}
+                        value={`${remainingDue.toLocaleString('ar-EG', { minimumFractionDigits: 2 })} جنيه`}
+                        className={inputReadOnlyClass}
+                      />
+                      <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                        {paymentStatus === 'paid'
+                          ? 'لا يوجد متبقي عند الدفع الكامل.'
+                          : 'الإجمالي − المبلغ المدفوع (إن وُجد).'}
+                      </p>
+                    </div>
+                  </>
+                )}
+                {paymentMode === 'cash' && paymentStatus !== 'paid' && (
+                  <div className="min-w-0 sm:col-span-2">
+                    <label className={labelClass}>المبلغ المدفوع الآن (اختياري)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      step={0.01}
+                      value={paidAmount}
+                      data-validation-field="paidAmount"
+                      onChange={(e) => {
+                        setPaidAmount(e.target.value);
+                        clearField('paidAmount');
+                      }}
+                      className={`${inputClass}${fieldErrors.paidAmount ? ' border-red-500 dark:border-red-400' : ''}`}
+                      placeholder="اتركه فارغًا أو أدخل المدفوع"
+                    />
+                    <FieldError message={fieldErrors.paidAmount} />
+                  </div>
+                )}
               </div>
             </section>
+
+            {submitError && (
+              <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+                {submitError}
+              </p>
+            )}
 
             <div className="flex flex-wrap gap-2 border-t border-card pt-6">
               <button type="submit" disabled={createMutation.isPending} className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold ${btnPrimarySolid}`}>

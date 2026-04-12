@@ -4,7 +4,7 @@ import { ArrowRight, BarChart3, CalendarClock } from 'lucide-react';
 import { productsApi } from '@/lib/api';
 import type { NearExpiryBatchRow } from '@/lib/api';
 import { PageWrapper } from '@/components/PageWrapper';
-import { textAccentBidex, hoverSurfaceBidex, btnPrimarySolid, focusRingBidex } from '@/lib/theme';
+import { textAccentBidex, hoverSurfaceBidex, btnPrimarySolid, controlInputHover, outlineButtonInteractive } from '@/lib/theme';
 import { useState } from 'react';
 import { pageCardInner, pageCardShell } from '@/lib/pageCardClasses';
 import { useAppSelector } from '@/store/hooks';
@@ -56,7 +56,7 @@ export function NearExpiryProductsPage() {
           <select
             value={months}
             onChange={(e) => setMonths(Number(e.target.value) as 3 | 6 | 9 | 12)}
-            className={`rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-700 ${focusRingBidex}`}
+            className={`rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-700 ${controlInputHover}`}
           >
             {MONTH_OPTIONS.map((m) => (
               <option key={m} value={m}>
@@ -192,7 +192,7 @@ export function NearExpiryProductsPage() {
         {isAdmin && (
           <Link
             to="/admin/products"
-            className="inline-flex rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
+            className={`inline-flex ${outlineButtonInteractive} px-4 py-2.5`}
           >
             إدارة المنتجات
           </Link>

@@ -40,10 +40,7 @@ export function CustomersPage() {
               </thead>
               <tbody>
                 {customers.map((c) => (
-                  <tr
-                    key={`${c.buyer_name}\0${c.buyer_phone ?? ''}`}
-                    className="border-b border-card/60 hover:bg-[color:color-mix(in_srgb,var(--bidex-primary)_6%,white)] dark:hover:bg-[color:color-mix(in_srgb,var(--muted-bg)_40%,var(--card-bg))]"
-                  >
+                  <tr key={`${c.buyer_name}\0${c.buyer_phone ?? ''}`} className="border-b border-card/60">
                     <td className="py-2.5 px-4 text-slate-900 dark:text-slate-100">
                       <Link
                         to={{

@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { invoicesApi } from '@/lib/api';
 import { PageWrapper } from '@/components/PageWrapper';
 import { pageCardInner, pageCardShell } from '@/lib/pageCardClasses';
-import { btnPrimarySolid, focusRingBidex, textAccentBidex } from '@/lib/theme';
+import { btnPrimarySolid, controlInputHover, textAccentBidex } from '@/lib/theme';
 import { useState } from 'react';
 
 export function InvoiceDetailPage() {
@@ -79,14 +79,14 @@ export function InvoiceDetailPage() {
                   value={payAmount}
                   onChange={(e) => setPayAmount(e.target.value)}
                   placeholder="قيمة الدفعة"
-                  className={`rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 ${focusRingBidex}`}
+                  className={`rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 ${controlInputHover}`}
                 />
                 <input
                   type="text"
                   value={payMethod}
                   onChange={(e) => setPayMethod(e.target.value)}
                   placeholder="طريقة الدفع"
-                  className={`rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 ${focusRingBidex}`}
+                  className={`rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 ${controlInputHover}`}
                 />
                 <button
                   type="button"

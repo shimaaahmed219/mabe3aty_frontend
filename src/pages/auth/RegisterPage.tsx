@@ -3,11 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch } from '@/store/hooks';
 import { setAuth } from '@/store/slices/authSlice';
 import { authApi, getApiErrorMessage } from '@/lib/api';
+import { reportFormValidity } from '@/lib/formValidation';
 import { AuthShell, authInputClass } from './AuthShell';
 import { PasswordField } from './PasswordField';
 
 const linkAccent =
-  'font-medium text-[var(--bidex-primary)] transition-colors hover:underline dark:text-sky-400 dark:hover:text-sky-300';
+  'font-medium text-[var(--bidex-primary)] transition-all duration-200 hover:text-sky-600 hover:underline hover:brightness-110 dark:text-sky-400 dark:hover:text-sky-200';
 
 export function RegisterPage() {
   const dispatch = useAppDispatch();
@@ -19,8 +20,9 @@ export function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!reportFormValidity(e.currentTarget)) return;
     setError('');
     if (password !== passwordConfirmation) {
       setError('كلمة المرور غير متطابقة');

@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { authApi } from '@/lib/api';
+import { reportFormValidity } from '@/lib/formValidation';
 import { pageCardInner } from '@/lib/pageCardClasses';
-import { btnPrimarySolid, focusRingBidex, textAccentBidex } from '@/lib/theme';
+import { btnPrimarySolid, controlInputHover, textAccentBidex } from '@/lib/theme';
 import { AuthDecoratedPage } from './AuthShell';
 
 const authCardShell =
   'w-full max-w-[420px] rounded-2xl border border-card bg-card shadow-xl overflow-hidden';
-const inputClass = `w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-slate-900 dark:border-[var(--input-border)] dark:bg-[var(--input-bg)] dark:text-slate-100 ${focusRingBidex}`;
+const inputClass = `w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-slate-900 dark:border-[var(--input-border)] dark:bg-[var(--input-bg)] dark:text-slate-100 ${controlInputHover}`;
 const btnPrimary = `w-full rounded-xl py-3 ${btnPrimarySolid}`;
 
 export function ForgotPasswordPage() {
@@ -16,8 +17,9 @@ export function ForgotPasswordPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!reportFormValidity(e.currentTarget)) return;
     setError('');
     setMessage('');
     setLoading(true);

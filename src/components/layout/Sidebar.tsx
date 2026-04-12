@@ -47,7 +47,7 @@ const sections = [
 ] as const;
 
 const sidebarContentClass =
-  'h-full flex flex-col bg-card border border-card rounded-2xl shadow-[0_12px_35px_rgba(15,23,42,0.08)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.25)]';
+  'h-full flex flex-col bg-card border border-card rounded-2xl shadow-[0_12px_35px_rgba(15,23,42,0.08)] transition-all duration-300 dark:shadow-[0_8px_24px_rgba(0,0,0,0.25)] hover:border-sky-400/35 hover:shadow-[0_16px_42px_rgba(14,116,218,0.14)] dark:hover:border-sky-400/30 dark:hover:shadow-[0_12px_40px_rgba(0,0,0,0.35)] motion-reduce:transition-colors';
 
 function SidebarContent({ showCloseButton, onClose }: { showCloseButton: boolean; onClose: () => void }) {
   const location = useLocation();
@@ -67,10 +67,10 @@ function SidebarContent({ showCloseButton, onClose }: { showCloseButton: boolean
   };
 
   const linkClass = (selected: boolean) =>
-    `flex items-center gap-3 w-full px-3 py-2.5 rounded-xl mb-1 text-sm transition-colors ${
+    `group flex items-center gap-3 w-full px-3 py-2.5 rounded-xl mb-1 text-sm transition-all duration-300 ease-out motion-reduce:transition-colors ${
       selected
-        ? 'bg-[color:color-mix(in_srgb,var(--bidex-primary)_12%,transparent)] text-bidex-primary font-semibold'
-        : 'text-muted hover:bg-muted-bg'
+        ? 'bg-[color:color-mix(in_srgb,var(--bidex-primary)_12%,transparent)] text-bidex-primary font-semibold hover:bg-[color:color-mix(in_srgb,var(--bidex-primary)_26%,transparent)] hover:shadow-[0_0_0_2px_rgba(34,211,238,0.45)] hover:scale-[1.02] motion-reduce:hover:scale-100'
+        : 'text-muted hover:bg-gradient-to-l hover:from-sky-500/15 hover:to-violet-500/10 hover:text-[var(--bidex-primary)] hover:scale-[1.02] hover:shadow-sm dark:hover:from-sky-400/20 dark:hover:to-violet-500/15 dark:hover:text-sky-200 motion-reduce:hover:scale-100'
     }`;
 
   const itemsBySection = sections.map((section) => ({
@@ -86,7 +86,7 @@ function SidebarContent({ showCloseButton, onClose }: { showCloseButton: boolean
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-muted-bg"
+            className="p-1.5 rounded-lg transition-all duration-200 hover:scale-105 hover:bg-sky-500/15 hover:text-sky-700 motion-reduce:hover:scale-100 dark:hover:bg-sky-400/20 dark:hover:text-sky-200"
             style={{ color: 'var(--foreground)' }}
             aria-label="إغلاق القائمة"
           >
@@ -102,7 +102,13 @@ function SidebarContent({ showCloseButton, onClose }: { showCloseButton: boolean
               const selected = location.pathname === to || (to === '/' && location.pathname === '/');
               return (
                 <Link key={to} to={to} onClick={onClose} className={linkClass(selected)}>
-                  <Icon className="w-5 h-5 shrink-0" style={{ color: selected ? 'var(--bidex-primary)' : 'var(--muted)' }} />
+                  <Icon
+                    className={`w-5 h-5 shrink-0 transition-all duration-300 ease-out group-hover:scale-110 motion-reduce:group-hover:scale-100 ${
+                      selected
+                        ? 'text-[var(--bidex-primary)]'
+                        : 'text-muted group-hover:text-sky-600 dark:group-hover:text-sky-400'
+                    }`}
+                  />
                   <span className="flex-1 truncate">{label}</span>
                   {badge != null && badge > 0 && (
                     <span className="min-w-[20px] h-5 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center px-1">
@@ -120,7 +126,13 @@ function SidebarContent({ showCloseButton, onClose }: { showCloseButton: boolean
             const selected = location.pathname === to;
             return (
               <Link key={to} to={to} onClick={onClose} className={linkClass(selected)}>
-                <Icon className="w-5 h-5 shrink-0" style={{ color: selected ? 'var(--bidex-primary)' : 'var(--muted)' }} />
+                <Icon
+                  className={`w-5 h-5 shrink-0 transition-all duration-300 ease-out group-hover:scale-110 motion-reduce:group-hover:scale-100 ${
+                    selected
+                      ? 'text-[var(--bidex-primary)]'
+                      : 'text-muted group-hover:text-sky-600 dark:group-hover:text-sky-400'
+                  }`}
+                />
                 <span>{label}</span>
               </Link>
             );
@@ -135,13 +147,18 @@ function SidebarContent({ showCloseButton, onClose }: { showCloseButton: boolean
           <p className="text-xs text-muted truncate">{user?.email || ''}</p>
         </div>
         <div className="flex items-center gap-1 shrink-0">
-          <Link to="/settings" onClick={onClose} className="p-2 rounded-lg bg-muted border border-card text-[var(--foreground)]" aria-label="الإعدادات">
+          <Link
+            to="/settings"
+            onClick={onClose}
+            className="p-2 rounded-lg bg-muted border border-card text-[var(--foreground)] transition-all duration-200 hover:scale-105 hover:border-sky-400/50 hover:bg-sky-500/10 hover:text-sky-800 motion-reduce:hover:scale-100 dark:hover:bg-sky-400/15 dark:hover:text-sky-200"
+            aria-label="الإعدادات"
+          >
             <Settings className="w-4 h-4" />
           </Link>
           <button
             type="button"
             onClick={requestLogout}
-            className="p-2 rounded-lg bg-muted border border-card text-red-600 dark:text-red-400 hover:opacity-90"
+            className="p-2 rounded-lg bg-muted border border-card text-red-600 transition-all duration-200 hover:scale-105 hover:border-red-400/60 hover:bg-red-500/15 hover:text-red-700 motion-reduce:hover:scale-100 dark:text-red-400 dark:hover:bg-red-500/20 dark:hover:text-red-300"
             aria-label="تسجيل الخروج"
             title="تسجيل الخروج"
           >

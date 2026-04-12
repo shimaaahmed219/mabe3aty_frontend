@@ -5,10 +5,11 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { toggleTheme } from '@/store/slices/themeSlice';
 import { BrandWordmark } from '@/components/BrandWordmark';
 import { pageCardInner } from '@/lib/pageCardClasses';
+import { formInputGlowInteraction } from '@/lib/theme';
 
 /** حقول الدخول/التسجيل — متوافقة مع `--input-*` والوضعين */
 export const authInputClass =
-  'w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 shadow-sm transition-[border-color,box-shadow,background-color] duration-200 hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-[color:color-mix(in_srgb,var(--bidex-primary)_32%,transparent)] focus:border-[var(--bidex-primary)] dark:border-[var(--input-border)] dark:bg-[var(--input-bg)] dark:text-slate-100 dark:placeholder:text-slate-500 dark:hover:border-[var(--bidex-primary)]/50';
+  `w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 shadow-sm dark:border-[var(--input-border)] dark:bg-[var(--input-bg)] dark:text-slate-100 dark:placeholder:text-slate-500 ${formInputGlowInteraction}`;
 
 function AuthBackdropLayers() {
   return (
@@ -114,7 +115,7 @@ export function AuthShell({ title, subtitle, activeTab, children, footer }: Auth
               ) : (
                 <Link
                   to="/login"
-                  className="flex-1 rounded-[0.65rem] py-2.5 text-center text-muted transition-colors duration-200 hover:bg-card hover:text-[var(--foreground)]"
+                  className="flex-1 rounded-[0.65rem] py-2.5 text-center text-muted transition-all duration-200 hover:bg-sky-500/12 hover:text-[var(--bidex-primary)] dark:hover:bg-sky-400/15 dark:hover:text-sky-300"
                 >
                   تسجيل الدخول
                 </Link>
@@ -126,7 +127,7 @@ export function AuthShell({ title, subtitle, activeTab, children, footer }: Auth
               ) : (
                 <Link
                   to="/register"
-                  className="flex-1 rounded-[0.65rem] py-2.5 text-center text-muted transition-colors duration-200 hover:bg-card hover:text-[var(--foreground)]"
+                  className="flex-1 rounded-[0.65rem] py-2.5 text-center text-muted transition-all duration-200 hover:bg-sky-500/12 hover:text-[var(--bidex-primary)] dark:hover:bg-sky-400/15 dark:hover:text-sky-300"
                 >
                   إنشاء حساب جديد
                 </Link>

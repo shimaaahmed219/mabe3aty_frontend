@@ -3,9 +3,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getApiErrorMessage, invoicesApi, reportsApi } from '@/lib/api';
 import { PageWrapper } from '@/components/PageWrapper';
 import { pageCardInner, pageCardShell } from '@/lib/pageCardClasses';
+import {
+  controlInputHover,
+  filterChipInactive,
+  outlineButtonInteractive,
+  toolbarInputClassWithFocus,
+} from '@/lib/theme';
 
-const inputClass =
-  'w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-[var(--input-border)] bg-white dark:bg-[var(--input-bg)] text-sm';
+const inputClass = `w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-[var(--input-border)] bg-white dark:bg-[var(--input-bg)] text-sm ${controlInputHover}`;
 
 type ToastState = { type: 'success' | 'error'; message: string } | null;
 
@@ -158,22 +163,42 @@ export function CreditDuesPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="بحث برقم الفاتورة أو اسم العميل أو الهاتف"
-          className="px-3 py-1.5 rounded-xl text-sm border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 min-w-[280px]"
+          className={`min-w-[280px] ${toolbarInputClassWithFocus}`}
         />
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-          className="px-3 py-1.5 rounded-xl text-sm border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700"
+          className={toolbarInputClassWithFocus}
         >
           <option value="due_date_asc">الاستحقاق: الأقدم أولاً</option>
           <option value="due_date_desc">الاستحقاق: الأحدث أولاً</option>
           <option value="remaining_desc">المتبقي: الأعلى أولاً</option>
           <option value="remaining_asc">المتبقي: الأقل أولاً</option>
         </select>
-        <button type="button" onClick={() => setFilter('all')} className={`rounded-xl border px-3 py-1.5 text-sm ${filter === 'all' ? 'border-[var(--bidex-primary)] bg-[var(--bidex-primary)] text-white' : 'border-slate-300 dark:border-slate-600'}`}>الكل</button>
-        <button type="button" onClick={() => setFilter('overdue')} className={`px-3 py-1.5 rounded-xl text-sm border ${filter === 'overdue' ? 'bg-red-600 text-white border-red-600' : 'border-slate-300 dark:border-slate-600'}`}>متأخر</button>
-        <button type="button" onClick={() => setFilter('due_soon')} className={`px-3 py-1.5 rounded-xl text-sm border ${filter === 'due_soon' ? 'bg-amber-600 text-white border-amber-600' : 'border-slate-300 dark:border-slate-600'}`}>مستحق خلال 3 أيام</button>
-        <button type="button" onClick={exportCsv} className="px-3 py-1.5 rounded-xl text-sm border border-slate-300 dark:border-slate-600">تصدير CSV</button>
+        <button
+          type="button"
+          onClick={() => setFilter('all')}
+          className={`rounded-xl border px-3 py-1.5 text-sm ${filter === 'all' ? 'border-[var(--bidex-primary)] bg-[var(--bidex-primary)] text-white' : filterChipInactive}`}
+        >
+          الكل
+        </button>
+        <button
+          type="button"
+          onClick={() => setFilter('overdue')}
+          className={`rounded-xl border px-3 py-1.5 text-sm ${filter === 'overdue' ? 'border-red-600 bg-red-600 text-white' : filterChipInactive}`}
+        >
+          متأخر
+        </button>
+        <button
+          type="button"
+          onClick={() => setFilter('due_soon')}
+          className={`rounded-xl border px-3 py-1.5 text-sm ${filter === 'due_soon' ? 'border-amber-600 bg-amber-600 text-white' : filterChipInactive}`}
+        >
+          مستحق خلال 3 أيام
+        </button>
+        <button type="button" onClick={exportCsv} className={outlineButtonInteractive}>
+          تصدير CSV
+        </button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
         <div className={pageCardShell}><div className={`${pageCardInner} p-4 text-sm`}>متأخرات: <span className="font-semibold">{overdueCount}</span></div></div>

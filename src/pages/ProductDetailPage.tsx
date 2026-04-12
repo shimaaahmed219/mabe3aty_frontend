@@ -18,14 +18,15 @@ import {
 } from 'recharts';
 import { ArrowDownRight, ArrowRight, ArrowUpRight, Package } from 'lucide-react';
 import { getApiErrorMessage, productsApi } from '@/lib/api';
+import { reportFormValidity } from '@/lib/formValidation';
 import type { Product, ProductBatchWriteInput, ProductStatsPayload, ProductStockBatch } from '@/lib/api';
 import { PageWrapper } from '@/components/PageWrapper';
 import { pageCardInner, pageCardShell } from '@/lib/pageCardClasses';
-import { btnPrimarySolid, focusRingBidex, textAccentBidex } from '@/lib/theme';
+import { btnPrimarySolid, controlInputHover, textAccentBidex } from '@/lib/theme';
 import { useAppSelector } from '@/store/hooks';
 const labelClass =
   'block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5';
-const inputClass = `w-full min-h-[42px] px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm ${focusRingBidex}`;
+const inputClass = `w-full min-h-[42px] px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 shadow-sm ${controlInputHover}`;
 
 const money = (n: number) =>
   n.toLocaleString('ar-EG', { minimumFractionDigits: 2, maximumFractionDigits: 2, numberingSystem: 'latn' });
@@ -148,8 +149,9 @@ export function ProductDetailPage() {
     setDraftTo('');
   };
 
-  const onSubmitBatch = (e: React.FormEvent) => {
+  const onSubmitBatch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!reportFormValidity(e.currentTarget)) return;
     const q = Number(batchQty);
     if (!Number.isFinite(q) || q <= 0) {
       setBatchErr('أدخلي كمية صحيحة أكبر من صفر.');

@@ -1,16 +1,17 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Trash2 } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { invoicesApi, type CreateInvoiceInput } from '@/lib/api';
+import { reportFormValidity } from '@/lib/formValidation';
 import { useAppSelector } from '@/store/hooks';
 import { PageWrapper } from '@/components/PageWrapper';
 import { pageCardInner, pageCardShell } from '@/lib/pageCardClasses';
-import { btnPrimarySolid, focusRingBidex } from '@/lib/theme';
+import { btnPrimarySolid, controlInputHover, outlineButtonInteractive } from '@/lib/theme';
 
 type Row = { description: string; quantity: number; unit_price: number };
 
-const inputClass = `w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-[var(--input-border)] dark:bg-[var(--input-bg)] dark:text-slate-100 ${focusRingBidex}`;
+const inputClass = `w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-[var(--input-border)] dark:bg-[var(--input-bg)] dark:text-slate-100 ${controlInputHover}`;
 
 export function NewInvoicePage() {
   const navigate = useNavigate();
@@ -23,6 +24,11 @@ export function NewInvoicePage() {
   const [buyerPhone, setBuyerPhone] = useState('');
   const [buyerAddress, setBuyerAddress] = useState('');
   const [rows, setRows] = useState<Row[]>([{ description: '', quantity: 1, unit_price: 0 }]);
+  const [formError, setFormError] = useState('');
+
+  useEffect(() => {
+    setFormError('');
+  }, [rows, saleDate]);
 
   const createMutation = useMutation({
     mutationFn: (data: CreateInvoiceInput) => invoicesApi.create(data).then((r) => r.data),
@@ -48,9 +54,14 @@ export function NewInvoicePage() {
     .filter((r) => r.description.trim() && r.quantity > 0 && r.unit_price >= 0)
     .map((r) => ({ description: r.description, quantity: r.quantity, unit_price: r.unit_price }));
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (items.length === 0) return;
+    if (!reportFormValidity(e.currentTarget)) return;
+    if (items.length === 0) {
+      setFormError('أضف بنداً واحداً على الأقل بوصف واضح وكمية أكبر من صفر وسعر وحدة.');
+      return;
+    }
+    setFormError('');
     createMutation.mutate({
       sale_date: saleDate,
       notes: notes || undefined,
@@ -125,15 +136,22 @@ export function NewInvoicePage() {
                 </tbody>
               </table>
             </div>
-            <button type="button" onClick={addRow} className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-700">
+            <button type="button" onClick={addRow} className={`inline-flex items-center gap-2 ${outlineButtonInteractive}`}>
               <Plus className="w-4 h-4" /> إضافة بند
             </button>
             <p className="font-medium text-slate-900 dark:text-slate-100">الإجمالي: {total.toLocaleString('ar-EG', { minimumFractionDigits: 2 })} جنيه</p>
+            {formError && (
+              <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+                {formError}
+              </p>
+            )}
             <div className="flex gap-2 pt-2">
-              <button type="submit" disabled={items.length === 0 || createMutation.isPending} className={`rounded-xl px-4 py-2.5 ${btnPrimarySolid}`}>
+              <button type="submit" disabled={createMutation.isPending} className={`rounded-xl px-4 py-2.5 ${btnPrimarySolid}`}>
                 {createMutation.isPending ? 'جاري الحفظ...' : 'حفظ الفاتورة'}
               </button>
-              <button type="button" onClick={() => navigate('/invoices')} className="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-700">إلغاء</button>
+              <button type="button" onClick={() => navigate('/invoices')} className={`${outlineButtonInteractive} px-4 py-2.5`}>
+                إلغاء
+              </button>
             </div>
           </form>
         </div>

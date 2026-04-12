@@ -7,11 +7,12 @@ import { useAppSelector } from '@/store/hooks';
 import { PageWrapper } from '@/components/PageWrapper';
 import { pageCardInner, pageCardShell } from '@/lib/pageCardClasses';
 import type { Invoice, InvoiceItem } from '@/lib/api';
+import { controlInputHover } from '@/lib/theme';
 
 const labelClass =
   'block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1.5';
 const inputClass =
-  'w-full min-h-[42px] px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-[var(--input-border)] bg-white dark:bg-[var(--input-bg)] text-slate-900 dark:text-slate-100 shadow-sm focus:ring-2 focus:ring-[color:color-mix(in_srgb,var(--bidex-primary)_32%,transparent)] focus:border-[var(--bidex-primary)]';
+  `w-full min-h-[42px] px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-[var(--input-border)] bg-white dark:bg-[var(--input-bg)] text-slate-900 dark:text-slate-100 shadow-sm ${controlInputHover}`;
 const btnPrimarySolid =
   'bg-[var(--bidex-primary)] text-white shadow-sm transition hover:brightness-110 disabled:opacity-60';
 

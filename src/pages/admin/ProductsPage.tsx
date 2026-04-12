@@ -3,13 +3,14 @@ import { Link } from 'react-router-dom';
 import { Plus, Pencil, Trash2, BarChart3 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { productsApi } from '@/lib/api';
+import { reportFormValidity } from '@/lib/formValidation';
 import { PageWrapper } from '@/components/PageWrapper';
 import type { Product, ProductUpdatePayload } from '@/lib/api';
-import { btnPrimarySolid, focusRingBidex, hoverSurfaceBidex, textAccentBidex } from '@/lib/theme';
+import { btnPrimarySolid, controlInputHover, hoverSurfaceBidex, outlineButtonInteractive, textAccentBidex } from '@/lib/theme';
 import { pageCardInner, pageCardShell } from '@/lib/pageCardClasses';
 import { useAppSelector } from '@/store/hooks';
 
-const inputClass = `w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-[var(--input-border)] bg-white dark:bg-[var(--input-bg)] text-slate-900 dark:text-slate-100 ${focusRingBidex}`;
+const inputClass = `w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-[var(--input-border)] bg-white dark:bg-[var(--input-bg)] text-slate-900 dark:text-slate-100 ${controlInputHover}`;
 const tableHeadClass =
   'bg-[color:color-mix(in_srgb,var(--bidex-primary)_9%,white)] dark:bg-[color:color-mix(in_srgb,var(--bidex-primary)_22%,#0f172a)]';
 const iconBtnClass = `rounded-xl p-2 transition-colors ${textAccentBidex} ${hoverSurfaceBidex}`;
@@ -193,8 +194,9 @@ export function ProductsPage() {
     setOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!reportFormValidity(e.currentTarget)) return;
     const price = defaultPrice !== '' ? Number(defaultPrice) : undefined;
     const stock = stockQuantity !== '' ? Number(stockQuantity) : undefined;
     const prodDate = productionDate.trim() || undefined;
@@ -519,7 +521,9 @@ export function ProductsPage() {
                   </p>
                 </div>
                 <div className="flex flex-wrap justify-end gap-2 pt-2">
-                  <button type="button" onClick={() => { setOpen(false); setEditing(null); }} className="rounded-xl border border-slate-300 px-4 py-2.5 font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700">إلغاء</button>
+                  <button type="button" onClick={() => { setOpen(false); setEditing(null); }} className={`${outlineButtonInteractive} px-4 py-2.5`}>
+                    إلغاء
+                  </button>
                   <button type="submit" disabled={createMutation.isPending || updateMutation.isPending} className={`rounded-xl px-5 py-2.5 ${btnPrimarySolid}`}>{editing ? 'حفظ التعديلات' : 'إضافة المنتج'}</button>
                 </div>
               </form>

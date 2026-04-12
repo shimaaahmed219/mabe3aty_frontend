@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notificationsApi } from '@/lib/api';
 import { PageWrapper } from '@/components/PageWrapper';
 import { pageCardInner, pageCardShell } from '@/lib/pageCardClasses';
-import { hoverSurfaceBidex, textAccentBidex } from '@/lib/theme';
+import { hoverSurfaceBidex, interactiveSubCard, textAccentBidex } from '@/lib/theme';
 
 export function NotificationsPage() {
   const queryClient = useQueryClient();
@@ -34,7 +34,7 @@ export function NotificationsPage() {
               {notifications.map((n) => (
                 <div
                   key={n.id}
-                  className={`p-4 rounded-xl border border-slate-200 dark:border-slate-700 ${n.read_at ? 'bg-transparent' : 'bg-slate-50 dark:bg-slate-800/50'}`}
+                  className={`p-4 ${interactiveSubCard} ${n.read_at ? 'bg-transparent' : 'bg-slate-50 dark:bg-slate-800/50'}`}
                 >
                   <div className="flex justify-between items-start flex-wrap gap-2">
                     <div>

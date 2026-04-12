@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/api';
+import { reportFormValidity } from '@/lib/formValidation';
 import { PageWrapper } from '@/components/PageWrapper';
 import type { User } from '@/lib/api';
 import { pageCardInner, pageCardShell } from '@/lib/pageCardClasses';
-import { btnPrimarySolid, focusRingBidex } from '@/lib/theme';
+import { btnPrimarySolid, controlInputHover, outlineButtonInteractive } from '@/lib/theme';
 
-const inputClass = `w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-slate-900 dark:border-[var(--input-border)] dark:bg-[var(--input-bg)] dark:text-slate-100 ${focusRingBidex}`;
+const inputClass = `w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-slate-900 dark:border-[var(--input-border)] dark:bg-[var(--input-bg)] dark:text-slate-100 ${controlInputHover}`;
 
 export function SellersPage() {
   const queryClient = useQueryClient();
@@ -16,6 +17,7 @@ export function SellersPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
+  const [formError, setFormError] = useState('');
 
   const { data: sellers, isLoading } = useQuery({
     queryKey: ['admin', 'sellers'],
@@ -32,12 +34,18 @@ export function SellersPage() {
       setEmail('');
       setPassword('');
       setPasswordConfirmation('');
+      setFormError('');
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (password !== passwordConfirmation) return;
+    setFormError('');
+    if (!reportFormValidity(e.currentTarget)) return;
+    if (password !== passwordConfirmation) {
+      setFormError('كلمة المرور غير متطابقة.');
+      return;
+    }
     createMutation.mutate({ name, email, password, password_confirmation: passwordConfirmation });
   };
 
@@ -82,7 +90,14 @@ export function SellersPage() {
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setOpen(false)} aria-hidden />
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => {
+              setOpen(false);
+              setFormError('');
+            }}
+            aria-hidden
+          />
           <div className={`relative w-full max-w-md overflow-hidden rounded-2xl border border-card bg-card shadow-xl p-6 ${pageCardInner}`}>
             <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-4">إضافة بائع</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -102,9 +117,19 @@ export function SellersPage() {
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">تأكيد كلمة المرور</label>
                 <input type="password" value={passwordConfirmation} onChange={(e) => setPasswordConfirmation(e.target.value)} required className={inputClass} />
               </div>
+              {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
               <div className="flex gap-2 justify-end pt-2">
-                <button type="button" onClick={() => setOpen(false)} className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-700">إلغاء</button>
-                <button type="submit" disabled={createMutation.isPending || password !== passwordConfirmation} className={`rounded-xl px-4 py-2 font-semibold disabled:opacity-60 ${btnPrimarySolid}`}>{createMutation.isPending ? 'جاري الحفظ...' : 'حفظ'}</button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    setFormError('');
+                  }}
+                  className={`${outlineButtonInteractive} px-4 py-2`}
+                >
+                  إلغاء
+                </button>
+                <button type="submit" disabled={createMutation.isPending} className={`rounded-xl px-4 py-2 font-semibold disabled:opacity-60 ${btnPrimarySolid}`}>{createMutation.isPending ? 'جاري الحفظ...' : 'حفظ'}</button>
               </div>
             </form>
           </div>

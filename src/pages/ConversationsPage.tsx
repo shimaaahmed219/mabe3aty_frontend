@@ -5,7 +5,7 @@ import { MessageCircle } from 'lucide-react';
 import { customersApi, type Customer } from '@/lib/api';
 import { PageWrapper } from '@/components/PageWrapper';
 import { pageCardInner, pageCardShell } from '@/lib/pageCardClasses';
-import { btnPrimarySolid, focusRingBidex, textAccentBidex } from '@/lib/theme';
+import { btnPrimarySolid, interactiveListRow, textAccentBidex, toolbarInputClassWithFocus } from '@/lib/theme';
 
 function whatsappUrlForCustomer(c: Customer): string | null {
   const normalizedPhone = (c.buyer_phone || '').replace(/[^\d]/g, '');
@@ -59,7 +59,7 @@ export function ConversationsPage() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="بحث بالاسم أو الهاتف أو العنوان..."
-          className={`min-w-[200px] flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 ${focusRingBidex}`}
+          className={`min-w-[200px] flex-1 py-2 ${toolbarInputClassWithFocus}`}
         />
         <span className="text-xs text-muted whitespace-nowrap">
           {withPhone} عميل برقم واتساب من {rows.length} المعروضين
@@ -81,7 +81,7 @@ export function ConversationsPage() {
               const wa = whatsappUrlForCustomer(c);
               const key = `${c.buyer_name}-${c.buyer_phone ?? ''}-${c.buyer_address ?? ''}`;
               return (
-                <div key={key} className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:bg-slate-50 dark:hover:bg-slate-700/20">
+                <div key={key} className={interactiveListRow}>
                   <div className="min-w-0 flex-1">
                     <Link
                       to={`/customers/${encodeURIComponent(c.buyer_name)}`}

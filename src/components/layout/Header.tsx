@@ -38,7 +38,7 @@ export function Header({ onMenuClick }: { onMenuClick: () => void }) {
 
   return (
     <header
-      className="fixed top-0 z-40 border-b shadow-sm"
+      className="fixed top-0 z-40 border-b shadow-sm transition-shadow duration-300 hover:shadow-md"
       style={{
         left: 0,
         right: 0,
@@ -52,7 +52,7 @@ export function Header({ onMenuClick }: { onMenuClick: () => void }) {
         <button
           type="button"
           onClick={onMenuClick}
-          className="md:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
+          className="md:hidden p-2 rounded-lg transition-all duration-200 hover:scale-105 hover:bg-sky-500/15 hover:text-sky-800 motion-reduce:hover:scale-100 dark:hover:bg-sky-400/20 dark:hover:text-sky-200"
           style={{ color: 'var(--foreground)' }}
           aria-label="فتح القائمة"
         >
@@ -61,7 +61,7 @@ export function Header({ onMenuClick }: { onMenuClick: () => void }) {
         <Link
           to="/"
           aria-label="مبيعاتي — لوحة التحكم"
-          className="flex items-center gap-2 min-w-0 rounded-lg border border-transparent px-1 py-0.5 no-underline hover:border-card hover:bg-muted/40 transition-colors"
+          className="flex items-center gap-2 min-w-0 rounded-lg border border-transparent px-1 py-0.5 no-underline transition-all duration-200 hover:scale-[1.02] hover:border-sky-400/45 hover:bg-sky-500/10 motion-reduce:hover:scale-100 dark:hover:border-sky-400/35 dark:hover:bg-sky-400/10"
         >
           <BrandWordmark variant="header" />
         </Link>
@@ -80,7 +80,7 @@ export function Header({ onMenuClick }: { onMenuClick: () => void }) {
             setNotifOpen(false);
             dispatch(toggleTheme());
           }}
-          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
+          className="p-2 rounded-lg transition-all duration-200 hover:scale-105 hover:bg-amber-500/15 hover:text-amber-700 motion-reduce:hover:scale-100 dark:hover:bg-amber-400/15 dark:hover:text-amber-200"
           style={{ color: 'var(--foreground)' }}
           aria-label="تبديل الوضع"
         >
@@ -93,7 +93,7 @@ export function Header({ onMenuClick }: { onMenuClick: () => void }) {
               setNotifOpen(false);
               setMenuOpen((o) => !o);
             }}
-            className="p-1.5 rounded-full text-white min-w-[40px] min-h-[40px] flex items-center justify-center"
+            className="p-1.5 rounded-full text-white min-w-[40px] min-h-[40px] flex items-center justify-center transition-all duration-200 hover:scale-105 hover:brightness-110 hover:ring-2 hover:ring-sky-400/70 hover:ring-offset-2 hover:ring-offset-[var(--card-bg)] motion-reduce:hover:scale-100"
             style={{ background: 'var(--bidex-primary)' }}
             aria-expanded={menuOpen}
             aria-haspopup="true"
@@ -111,7 +111,7 @@ export function Header({ onMenuClick }: { onMenuClick: () => void }) {
               <button
                 type="button"
                 onClick={openLogoutConfirm}
-                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-slate-100 dark:hover:bg-slate-700"
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm transition-all duration-200 hover:bg-red-500/12 hover:ps-1 hover:text-red-700 dark:hover:bg-red-500/15 dark:hover:text-red-300"
                 style={{ color: 'var(--foreground)' }}
               >
                 <LogOut className="w-4 h-4" />

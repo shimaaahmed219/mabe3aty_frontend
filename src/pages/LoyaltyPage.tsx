@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { reportsApi } from '@/lib/api';
 import { PageWrapper } from '@/components/PageWrapper';
 import { pageCardInner, pageCardShell } from '@/lib/pageCardClasses';
+import { outlineButtonInteractive, toolbarInputClassWithFocus } from '@/lib/theme';
 
 export function LoyaltyPage() {
   const [search, setSearch] = useState('');
@@ -57,18 +58,20 @@ export function LoyaltyPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="بحث باسم العميل أو الهاتف"
-          className="px-3 py-1.5 rounded-xl text-sm border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 min-w-[240px]"
+          className={`min-w-[240px] ${toolbarInputClassWithFocus}`}
         />
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-          className="px-3 py-1.5 rounded-xl text-sm border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700"
+          className={toolbarInputClassWithFocus}
         >
           <option value="available_desc">النقاط المتاحة: الأعلى أولاً</option>
           <option value="available_asc">النقاط المتاحة: الأقل أولاً</option>
           <option value="sales_desc">المبيعات: الأعلى أولاً</option>
         </select>
-        <button type="button" onClick={exportCsv} className="px-3 py-1.5 rounded-xl text-sm border border-slate-300 dark:border-slate-600">تصدير CSV</button>
+        <button type="button" onClick={exportCsv} className={outlineButtonInteractive}>
+          تصدير CSV
+        </button>
       </div>
       <div className={pageCardShell}>
         <div className={pageCardInner}>

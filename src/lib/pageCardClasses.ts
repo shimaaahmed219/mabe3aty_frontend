@@ -1,6 +1,9 @@
-/** إطار البطاقات الموحّد (ألوان المشروع + ظل أوضح) */
+/** إطار البطاقات الموحّد — بدون hover على الإطار كاملًا (مناسب للنماذج؛ التفاعل يكون على الحقول) */
 export const pageCardShell =
   'rounded-2xl border border-card bg-card shadow-md overflow-hidden min-w-0';
+
+/** بطاقة إحصائية/لوحة — نفس الإطار مع تفاعل hover على البطاقة (لوحة التحكم وغيرها) */
+export const pageCardShellInteractive = `${pageCardShell} dash-card-interactive`;
 
 /** خلفية داخلية بتدرج خفيف متناسق مع الداشبورد وصفحة إضافة البيع */
 export const pageCardInner =

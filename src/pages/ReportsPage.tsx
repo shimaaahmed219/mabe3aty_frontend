@@ -4,9 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import { reportsApi } from '@/lib/api';
 import { PageWrapper } from '@/components/PageWrapper';
 import { pageCardInner, pageCardShell } from '@/lib/pageCardClasses';
-import { focusRingBidex, textAccentBidex } from '@/lib/theme';
+import { controlInputHover, textAccentBidex } from '@/lib/theme';
 
-const inputClass = `w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-[var(--input-border)] dark:bg-[var(--input-bg)] dark:text-slate-100 ${focusRingBidex}`;
+const inputClass = `w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-[var(--input-border)] dark:bg-[var(--input-bg)] dark:text-slate-100 ${controlInputHover}`;
 
 export function ReportsPage() {
   const [reportDate, setReportDate] = useState(new Date().toISOString().slice(0, 10));

@@ -53,7 +53,7 @@ export function HeaderNotificationsMenu({ open, onToggle, onClose }: Props) {
       <button
         type="button"
         onClick={onToggle}
-        className="relative rounded-lg p-2 transition-colors hover:bg-slate-100 dark:hover:bg-slate-700"
+        className="relative rounded-lg p-2 transition-all duration-200 hover:scale-105 hover:bg-violet-500/12 hover:text-violet-800 motion-reduce:hover:scale-100 dark:hover:bg-violet-400/15 dark:hover:text-violet-200"
         style={{ color: 'var(--foreground)' }}
         aria-expanded={open}
         aria-haspopup="true"
@@ -111,7 +111,7 @@ export function HeaderNotificationsMenu({ open, onToggle, onClose }: Props) {
             <Link
               to="/notifications"
               onClick={onClose}
-              className="block rounded-lg py-2.5 text-center text-sm font-semibold text-[var(--bidex-primary)] transition-colors hover:bg-muted-bg dark:text-sky-400"
+              className="block rounded-lg py-2.5 text-center text-sm font-semibold text-[var(--bidex-primary)] transition-all duration-200 hover:bg-sky-500/12 hover:text-sky-800 dark:text-sky-400 dark:hover:bg-sky-400/15 dark:hover:text-sky-100"
             >
               عرض صفحة الإشعارات
             </Link>
