@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { adminApi } from '@/lib/api';
+import { adminApi, getApiErrorMessage } from '@/lib/api';
+import { appToast } from '@/lib/appToast';
 import { reportFormValidity } from '@/lib/formValidation';
 import { PageWrapper } from '@/components/PageWrapper';
 import type { User } from '@/lib/api';
 import { pageCardInner, pageCardShell } from '@/lib/pageCardClasses';
+import { PasswordField } from '@/pages/auth/PasswordField';
 import { btnPrimarySolid, controlInputHover, outlineButtonInteractive } from '@/lib/theme';
 
 const inputClass = `w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-slate-900 dark:border-[var(--input-border)] dark:bg-[var(--input-bg)] dark:text-slate-100 ${controlInputHover}`;
@@ -35,6 +37,12 @@ export function SellersPage() {
       setPassword('');
       setPasswordConfirmation('');
       setFormError('');
+      appToast.success('تم إضافة البائع');
+    },
+    onError: (err: unknown) => {
+      const msg = getApiErrorMessage(err, 'فشل إضافة البائع');
+      setFormError(msg);
+      appToast.error('تعذّر إضافة البائع', msg);
     },
   });
 
@@ -44,6 +52,7 @@ export function SellersPage() {
     if (!reportFormValidity(e.currentTarget)) return;
     if (password !== passwordConfirmation) {
       setFormError('كلمة المرور غير متطابقة.');
+      appToast.warning('كلمة المرور غير متطابقة', 'تأكد من تطابق الحقلين.');
       return;
     }
     createMutation.mutate({ name, email, password, password_confirmation: passwordConfirmation });
@@ -109,14 +118,22 @@ export function SellersPage() {
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">البريد الإلكتروني</label>
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className={inputClass} />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">كلمة المرور</label>
-                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className={inputClass} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">تأكيد كلمة المرور</label>
-                <input type="password" value={passwordConfirmation} onChange={(e) => setPasswordConfirmation(e.target.value)} required className={inputClass} />
-              </div>
+              <PasswordField
+                id="seller-password"
+                label="كلمة المرور"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+                inputClassName={inputClass}
+              />
+              <PasswordField
+                id="seller-password-confirm"
+                label="تأكيد كلمة المرور"
+                value={passwordConfirmation}
+                onChange={(e) => setPasswordConfirmation(e.target.value)}
+                autoComplete="new-password"
+                inputClassName={inputClass}
+              />
               {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
               <div className="flex gap-2 justify-end pt-2">
                 <button

@@ -8,6 +8,7 @@ import { authApi } from './lib/api';
 import { ThemeInit } from './components/ThemeInit';
 import { ProtectedRoute, AdminRoute } from './components/ProtectedRoute';
 import { AppLayout } from './components/layout/AppLayout';
+import { AppToaster } from './components/AppToaster';
 
 const LoginPage = lazy(() => import('./pages/auth/LoginPage').then((m) => ({ default: m.LoginPage })));
 const RegisterPage = lazy(() => import('./pages/auth/RegisterPage').then((m) => ({ default: m.RegisterPage })));
@@ -156,6 +157,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AppRoutes />
+      <AppToaster />
     </QueryClientProvider>
   );
 }

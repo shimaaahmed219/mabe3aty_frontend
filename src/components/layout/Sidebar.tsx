@@ -19,6 +19,7 @@ import {
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { useAppSelector } from '@/store/hooks';
 import { useLogout } from '@/hooks/useLogout';
+import { isSellerRole, isSellerProductsNavActive } from '@/lib/sellerAccess';
 
 const menuItems = [
   { to: '/', label: 'لوحة التحكم', icon: LayoutDashboard },
@@ -46,13 +47,28 @@ const sections = [
   { title: 'الدعم', keys: ['/conversations', '/notifications'] },
 ] as const;
 
+const sellerMenuItems = [
+  { to: '/sales/new', label: 'إضافة عملية بيع', icon: ShoppingCart, isNew: true as const },
+  { to: '/conversations', label: 'واتساب العملاء', icon: MessageCircle },
+  { to: '/products', label: 'الأصناف', icon: Package },
+  { to: '/customers', label: 'العملاء', icon: Users },
+  { to: '/loyalty', label: 'نقاط العملاء', icon: BadgePercent },
+] as const;
+
 const sidebarContentClass =
   'h-full flex flex-col bg-card border border-card rounded-2xl shadow-[0_12px_35px_rgba(15,23,42,0.08)] transition-all duration-300 dark:shadow-[0_8px_24px_rgba(0,0,0,0.25)] hover:border-sky-400/35 hover:shadow-[0_16px_42px_rgba(14,116,218,0.14)] dark:hover:border-sky-400/30 dark:hover:shadow-[0_12px_40px_rgba(0,0,0,0.35)] motion-reduce:transition-colors';
+
+function sellerNavSelected(to: string, pathname: string): boolean {
+  if (to === '/products') return isSellerProductsNavActive(pathname);
+  if (to === '/customers') return pathname === '/customers' || /^\/customers\/.+/.test(pathname);
+  return pathname === to;
+}
 
 function SidebarContent({ showCloseButton, onClose }: { showCloseButton: boolean; onClose: () => void }) {
   const location = useLocation();
   const user = useAppSelector((s) => s.auth.user);
   const isAdmin = useAppSelector((s) => s.auth.user?.role) === 'admin';
+  const isSeller = isSellerRole(user?.role);
   const doLogout = useLogout();
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
 
@@ -95,11 +111,11 @@ function SidebarContent({ showCloseButton, onClose }: { showCloseButton: boolean
         </div>
       )}
       <nav className="flex-1 px-3 py-3 overflow-auto">
-        {itemsBySection.map((section) => (
-          <div key={section.title} className="mb-4">
-            <p className="px-3 py-2 text-[11px] font-semibold text-muted uppercase tracking-wider">{section.title}</p>
-            {section.items.map(({ to, label, icon: Icon, badge, isNew }) => {
-              const selected = location.pathname === to || (to === '/' && location.pathname === '/');
+        {isSeller ? (
+          <div className="mb-4">
+            <p className="px-3 py-2 text-[11px] font-semibold text-muted uppercase tracking-wider">القائمة</p>
+            {sellerMenuItems.map(({ to, label, icon: Icon, isNew }) => {
+              const selected = sellerNavSelected(to, location.pathname);
               return (
                 <Link key={to} to={to} onClick={onClose} className={linkClass(selected)}>
                   <Icon
@@ -110,17 +126,39 @@ function SidebarContent({ showCloseButton, onClose }: { showCloseButton: boolean
                     }`}
                   />
                   <span className="flex-1 truncate">{label}</span>
-                  {badge != null && badge > 0 && (
-                    <span className="min-w-[20px] h-5 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center px-1">
-                      {badge}
-                    </span>
-                  )}
                   {isNew && <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--bidex-primary)] text-white">جديد</span>}
                 </Link>
               );
             })}
           </div>
-        ))}
+        ) : (
+          itemsBySection.map((section) => (
+            <div key={section.title} className="mb-4">
+              <p className="px-3 py-2 text-[11px] font-semibold text-muted uppercase tracking-wider">{section.title}</p>
+              {section.items.map(({ to, label, icon: Icon, badge, isNew }) => {
+                const selected = location.pathname === to || (to === '/' && location.pathname === '/');
+                return (
+                  <Link key={to} to={to} onClick={onClose} className={linkClass(selected)}>
+                    <Icon
+                      className={`w-5 h-5 shrink-0 transition-all duration-300 ease-out group-hover:scale-110 motion-reduce:group-hover:scale-100 ${
+                        selected
+                          ? 'text-[var(--bidex-primary)]'
+                          : 'text-muted group-hover:text-sky-600 dark:group-hover:text-sky-400'
+                      }`}
+                    />
+                    <span className="flex-1 truncate">{label}</span>
+                    {badge != null && badge > 0 && (
+                      <span className="min-w-[20px] h-5 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center px-1">
+                        {badge}
+                      </span>
+                    )}
+                    {isNew && <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--bidex-primary)] text-white">جديد</span>}
+                  </Link>
+                );
+              })}
+            </div>
+          ))
+        )}
         {isAdmin &&
           adminItems.map(({ to, label, icon: Icon }) => {
             const selected = location.pathname === to;
@@ -147,14 +185,16 @@ function SidebarContent({ showCloseButton, onClose }: { showCloseButton: boolean
           <p className="text-xs text-muted truncate">{user?.email || ''}</p>
         </div>
         <div className="flex items-center gap-1 shrink-0">
-          <Link
-            to="/settings"
-            onClick={onClose}
-            className="p-2 rounded-lg bg-muted border border-card text-[var(--foreground)] transition-all duration-200 hover:scale-105 hover:border-sky-400/50 hover:bg-sky-500/10 hover:text-sky-800 motion-reduce:hover:scale-100 dark:hover:bg-sky-400/15 dark:hover:text-sky-200"
-            aria-label="الإعدادات"
-          >
-            <Settings className="w-4 h-4" />
-          </Link>
+          {!isSeller && (
+            <Link
+              to="/settings"
+              onClick={onClose}
+              className="p-2 rounded-lg bg-muted border border-card text-[var(--foreground)] transition-all duration-200 hover:scale-105 hover:border-sky-400/50 hover:bg-sky-500/10 hover:text-sky-800 motion-reduce:hover:scale-100 dark:hover:bg-sky-400/15 dark:hover:text-sky-200"
+              aria-label="الإعدادات"
+            >
+              <Settings className="w-4 h-4" />
+            </Link>
+          )}
           <button
             type="button"
             onClick={requestLogout}

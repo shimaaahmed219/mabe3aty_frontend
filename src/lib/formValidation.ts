@@ -1,93 +1,90 @@
-/** يتحقق من قيود HTML5 ويعرض رسالة المتصفح لأول حقل غير صالح. يُرجع true إذا كان النموذج صالحاً. */
-export function reportFormValidity(form: HTMLFormElement): boolean {
-  if (form.reportValidity()) return true;
-  focusFirstNativeInvalidControl(form);
-  return false;
+/** بادئة `id` لحقول نموذج إضافة البيع (للتمرير عند وجود أخطاء) */
+export const ADD_SALE_FIELD_ID_PREFIX = 'add-sale-field-';
+
+const LINE_SUBFIELD_ORDER = ['product', 'saleType', 'qty', 'price', 'discount', 'desc'] as const;
+
+function rankAddSaleFieldKey(key: string): number {
+  const top: Record<string, number> = { buyerName: 0, buyerPhone: 1, buyerAddress: 2 };
+  if (key in top) return top[key];
+
+  const lineMatch = key.match(/^line-(\d+)-(product|saleType|qty|price|discount|desc)$/);
+  if (lineMatch) {
+    const line = Number(lineMatch[1]);
+    const sub = LINE_SUBFIELD_ORDER.indexOf(lineMatch[2] as (typeof LINE_SUBFIELD_ORDER)[number]);
+    return 100 + line * 20 + (sub === -1 ? 15 : sub);
+  }
+
+  const tail: Record<string, number> = {
+    invoiceDiscount: 8000,
+    redeemedPoints: 8001,
+    saleDate: 8100,
+    paymentStatus: 8200,
+    paymentMode: 8201,
+    paymentMethodDetail: 8202,
+    dueDate: 8300,
+    paidAmount: 8301,
+  };
+  if (key in tail) return tail[key];
+  return 99_999;
 }
 
-/** يمرِّر ويركِّز أول حقل غير صالح حسب قيود HTML5 (ترتيب الظهور في DOM). */
-export function focusFirstNativeInvalidControl(form: HTMLFormElement): void {
-  const controls = form.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
-    'input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])',
-  );
-  for (const el of controls) {
+/** ترتيب مفاتيح أخطاء إضافة البيع كما يظهر النموذج في الصفحة */
+export function compareAddSaleErrorFieldKeys(a: string, b: string): number {
+  return rankAddSaleFieldKey(a) - rankAddSaleFieldKey(b);
+}
+
+/**
+ * يمرّر ويركّز أول حقل له `id` يطابق `idPrefix + key` حسب ترتيب المفاتيح بعد الفرز.
+ */
+export function focusFirstFormErrorField(
+  errorKeys: string[],
+  idPrefix: string,
+  compareKeys: (a: string, b: string) => number,
+): void {
+  const keys = [...new Set(errorKeys)].filter(Boolean);
+  if (keys.length === 0) return;
+  const sorted = keys.sort(compareKeys);
+  const base = idPrefix.endsWith('-') ? idPrefix : `${idPrefix}-`;
+  for (const key of sorted) {
+    const el = document.getElementById(`${base}${key}`);
+    if (!(el instanceof HTMLInputElement) && !(el instanceof HTMLSelectElement) && !(el instanceof HTMLTextAreaElement)) {
+      continue;
+    }
+    if (el.disabled) continue;
+    if (el instanceof HTMLInputElement && el.readOnly) continue;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+    el.focus({ preventScroll: true });
+    return;
+  }
+}
+
+function goToFirstInvalidControl(form: HTMLFormElement): void {
+  for (let i = 0; i < form.elements.length; i++) {
+    const el = form.elements[i];
+    if (el instanceof HTMLFieldSetElement) continue;
+    if (!(el instanceof HTMLInputElement) && !(el instanceof HTMLSelectElement) && !(el instanceof HTMLTextAreaElement)) {
+      continue;
+    }
+    if (el.type === 'hidden' || el.disabled) continue;
+    if (el instanceof HTMLInputElement && el.readOnly) continue;
     if (!el.willValidate) continue;
-    if (typeof el.checkValidity === 'function' && !el.checkValidity()) {
-      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    if (!el.checkValidity()) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
       el.focus({ preventScroll: true });
+      void el.reportValidity();
       return;
     }
   }
 }
 
-const LINE_FIELD_ORDER = ['product', 'saleType', 'qty', 'price', 'discount', 'desc'] as const;
-
-function compareAddSaleLineKeys(a: string, b: string): number {
-  const ma = /^line-(\d+)-(.+)$/.exec(a);
-  const mb = /^line-(\d+)-(.+)$/.exec(b);
-  if (!ma || !mb) return 0;
-  const ia = Number(ma[1]);
-  const ib = Number(mb[1]);
-  if (ia !== ib) return ia - ib;
-  const fa = LINE_FIELD_ORDER.indexOf(ma[2] as (typeof LINE_FIELD_ORDER)[number]);
-  const fb = LINE_FIELD_ORDER.indexOf(mb[2] as (typeof LINE_FIELD_ORDER)[number]);
-  return (fa === -1 ? 99 : fa) - (fb === -1 ? 99 : fb);
-}
-
-/** ترتيب مفاتيح أخطاء «إضافة بيع» لمطابقة ترتيب الحقول في الصفحة (من الأعلى للأسفل). */
-export function sortAddSaleValidationKeys(keys: string[]): string[] {
-  const lineKeys = keys.filter((k) => k.startsWith('line-')).sort(compareAddSaleLineKeys);
-  const buyerOrder = ['buyerName', 'buyerPhone', 'buyerAddress'] as const;
-  const buyerKeys = keys.filter((k) => k.startsWith('buyer'));
-  buyerKeys.sort((a, b) => buyerOrder.indexOf(a as (typeof buyerOrder)[number]) - buyerOrder.indexOf(b as (typeof buyerOrder)[number]));
-  const restOrder = [
-    'invoiceDiscount',
-    'redeemedPoints',
-    'saleDate',
-    'paymentStatus',
-    'paymentMode',
-    'paymentMethodDetail',
-    'dueDate',
-    'paidAmount',
-  ] as const;
-  const rest = keys.filter((k) => !k.startsWith('line-') && !k.startsWith('buyer'));
-  rest.sort(
-    (a, b) =>
-      (restOrder.indexOf(a as (typeof restOrder)[number]) === -1 ? 999 : restOrder.indexOf(a as (typeof restOrder)[number])) -
-      (restOrder.indexOf(b as (typeof restOrder)[number]) === -1 ? 999 : restOrder.indexOf(b as (typeof restOrder)[number])),
-  );
-  return [...buyerKeys, ...lineKeys, ...rest];
-}
-
-function escapeAttrValue(value: string): string {
-  if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
-    return CSS.escape(value);
-  }
-  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-}
-
 /**
- * يمرِّر ويركِّز أول حقل يحمل `data-validation-field` ضِمن المفاتيح المعطاة.
- * يُستدعى بعد رسم React (مثلاً requestAnimationFrame مزدوج).
+ * يتحقق من قيود HTML5. إن كان النموذج غير صالح يمرّر ويركّز أول حقل غير صالح ويعرض رسالة المتصفح.
+ * يُرجع true إذا كان النموذج صالحاً.
  */
-export function focusFirstFieldByValidationKeys(
-  form: HTMLFormElement,
-  keys: string[],
-  sortKeys?: (k: string[]) => string[],
-): boolean {
-  const ordered = sortKeys ? sortKeys(keys) : [...keys].sort();
-  for (const key of ordered) {
-    const el = form.querySelector<HTMLElement>(`[data-validation-field="${escapeAttrValue(key)}"]`);
-    if (!el) continue;
-    if (
-      el instanceof HTMLInputElement ||
-      el instanceof HTMLSelectElement ||
-      el instanceof HTMLTextAreaElement
-    ) {
-      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
-      el.focus({ preventScroll: true });
-      return true;
-    }
+export function reportFormValidity(form: HTMLFormElement): boolean {
+  if (form.checkValidity()) {
+    return true;
   }
+  goToFirstInvalidControl(form);
   return false;
 }

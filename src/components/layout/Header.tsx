@@ -7,6 +7,7 @@ import { toggleTheme } from '@/store/slices/themeSlice';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { useLogout } from '@/hooks/useLogout';
 import { HeaderNotificationsMenu } from '@/components/layout/HeaderNotificationsMenu';
+import { isSellerRole, SELLER_HOME_PATH } from '@/lib/sellerAccess';
 
 export function Header({ onMenuClick }: { onMenuClick: () => void }) {
   const dispatch = useAppDispatch();
@@ -59,21 +60,23 @@ export function Header({ onMenuClick }: { onMenuClick: () => void }) {
           <Menu className="w-5 h-5" />
         </button>
         <Link
-          to="/"
-          aria-label="مبيعاتي — لوحة التحكم"
+          to={isSellerRole(user?.role) ? SELLER_HOME_PATH : '/'}
+          aria-label={isSellerRole(user?.role) ? 'مبيعاتي — إضافة عملية بيع' : 'مبيعاتي — لوحة التحكم'}
           className="flex items-center gap-2 min-w-0 rounded-lg border border-transparent px-1 py-0.5 no-underline transition-all duration-200 hover:scale-[1.02] hover:border-sky-400/45 hover:bg-sky-500/10 motion-reduce:hover:scale-100 dark:hover:border-sky-400/35 dark:hover:bg-sky-400/10"
         >
           <BrandWordmark variant="header" />
         </Link>
         <div className="flex-1 min-w-0" />
-        <HeaderNotificationsMenu
-          open={notifOpen}
-          onToggle={() => {
-            setMenuOpen(false);
-            setNotifOpen((o) => !o);
-          }}
-          onClose={() => setNotifOpen(false)}
-        />
+        {!isSellerRole(user?.role) && (
+          <HeaderNotificationsMenu
+            open={notifOpen}
+            onToggle={() => {
+              setMenuOpen(false);
+              setNotifOpen((o) => !o);
+            }}
+            onClose={() => setNotifOpen(false)}
+          />
+        )}
         <button
           type="button"
           onClick={() => {

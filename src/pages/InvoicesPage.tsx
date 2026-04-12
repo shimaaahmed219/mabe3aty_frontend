@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Pencil, Trash2, FileText } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { invoicesApi, productsApi } from '@/lib/api';
+import { getApiErrorMessage, invoicesApi, productsApi } from '@/lib/api';
+import { appToast } from '@/lib/appToast';
 import { useAppSelector } from '@/store/hooks';
 import { PageWrapper } from '@/components/PageWrapper';
 import { pageCardInner, pageCardShell } from '@/lib/pageCardClasses';
@@ -84,6 +85,10 @@ export function InvoicesPage() {
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       setEditInvoice(null);
+      appToast.success('تم تحديث الفاتورة');
+    },
+    onError: (err: unknown) => {
+      appToast.error('فشل التحديث', getApiErrorMessage(err, 'تعذّر حفظ التعديلات.'));
     },
   });
 
@@ -93,6 +98,10 @@ export function InvoicesPage() {
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       setEditInvoice(null);
+      appToast.success('تم حذف الفاتورة');
+    },
+    onError: (err: unknown) => {
+      appToast.error('فشل الحذف', getApiErrorMessage(err, 'تعذّر حذف الفاتورة.'));
     },
   });
 

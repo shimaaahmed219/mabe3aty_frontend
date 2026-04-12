@@ -1,7 +1,8 @@
 import { useParams, Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { invoicesApi } from '@/lib/api';
+import { getApiErrorMessage, invoicesApi } from '@/lib/api';
+import { appToast } from '@/lib/appToast';
 import { PageWrapper } from '@/components/PageWrapper';
 import { pageCardInner, pageCardShell } from '@/lib/pageCardClasses';
 import { btnPrimarySolid, controlInputHover, textAccentBidex } from '@/lib/theme';
@@ -26,6 +27,10 @@ export function InvoiceDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['reports'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      appToast.success('تم تسجيل الدفعة', 'تم تحديث حالة الفاتورة.');
+    },
+    onError: (err: unknown) => {
+      appToast.error('فشل تسجيل الدفعة', getApiErrorMessage(err, 'تعذّر إرسال المبلغ.'));
     },
   });
 
