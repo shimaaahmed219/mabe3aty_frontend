@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Trash2 } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { invoicesApi, type CreateInvoiceInput } from '@/lib/api';
+import { getApiErrorMessage, invoicesApi, type CreateInvoiceInput } from '@/lib/api';
+import { appToast } from '@/lib/appToast';
 import { reportFormValidity } from '@/lib/formValidation';
 import { useAppSelector } from '@/store/hooks';
 import { PageWrapper } from '@/components/PageWrapper';
@@ -35,7 +36,11 @@ export function NewInvoicePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      appToast.success('تم إنشاء الفاتورة', 'تمت إضافتها إلى قائمة المبيعات.');
       navigate('/invoices');
+    },
+    onError: (err: unknown) => {
+      appToast.error('فشل إنشاء الفاتورة', getApiErrorMessage(err, 'تعذّر الإرسال إلى الخادم.'));
     },
   });
 
@@ -58,7 +63,9 @@ export function NewInvoicePage() {
     e.preventDefault();
     if (!reportFormValidity(e.currentTarget)) return;
     if (items.length === 0) {
-      setFormError('أضف بنداً واحداً على الأقل بوصف واضح وكمية أكبر من صفر وسعر وحدة.');
+      const msg = 'أضف بنداً واحداً على الأقل بوصف واضح وكمية أكبر من صفر وسعر وحدة.';
+      setFormError(msg);
+      appToast.warning('بيانات ناقصة', msg);
       return;
     }
     setFormError('');

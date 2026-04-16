@@ -3,7 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch } from '@/store/hooks';
 import { setAuth } from '@/store/slices/authSlice';
 import { authApi, getApiErrorMessage } from '@/lib/api';
+import { isSellerRole, SELLER_HOME_PATH } from '@/lib/sellerAccess';
 import { reportFormValidity } from '@/lib/formValidation';
+import { appToast } from '@/lib/appToast';
 import { AuthShell, authInputClass } from './AuthShell';
 import { PasswordField } from './PasswordField';
 
@@ -26,15 +28,18 @@ export function RegisterPage() {
     setError('');
     if (password !== passwordConfirmation) {
       setError('كلمة المرور غير متطابقة');
+      appToast.warning('كلمة المرور غير متطابقة', 'تأكد من تطابق الحقلين ثم أعد المحاولة.');
       return;
     }
     setLoading(true);
     try {
       const { data } = await authApi.register({ name, email, password, password_confirmation: passwordConfirmation });
       dispatch(setAuth({ user: data.user, token: data.token }));
-      navigate('/');
+      navigate(isSellerRole(data.user.role) ? SELLER_HOME_PATH : '/');
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err, 'فشل التسجيل'));
+      const msg = getApiErrorMessage(err, 'فشل التسجيل');
+      setError(msg);
+      appToast.error('تعذّر إنشاء الحساب', msg);
     } finally {
       setLoading(false);
     }

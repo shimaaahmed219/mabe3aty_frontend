@@ -97,7 +97,10 @@ export const targetsApi = {
 export const notificationsApi = {
   list: (params?: { page?: number; per_page?: number }) =>
     api.get<NotificationsListResponse>('/notifications', { params }),
-  markRead: (id: number) => api.post(`/notifications/${id}/read`),
+  count: () => api.get<NotificationsCountResponse>('/notifications/count'),
+  markRead: (id: number) => api.post(`/notifications/${id}/mark`),
+  markReadLegacy: (id: number) => api.post(`/notifications/${id}/read`),
+  markAllRead: () => api.post('/notifications/mark-all'),
 };
 
 // Products
@@ -451,6 +454,10 @@ export interface Paginated<T> {
 }
 
 export type NotificationsListResponse = Paginated<AppNotification> & { unread_count: number };
+export interface NotificationsCountResponse {
+  total: number;
+  unread: number;
+}
 
 export interface AdminDashboard {
   daily_sales: number;

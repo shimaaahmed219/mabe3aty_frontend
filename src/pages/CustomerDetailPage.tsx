@@ -5,6 +5,8 @@ import type { Invoice, Customer } from '@/lib/api';
 import { PageWrapper } from '@/components/PageWrapper';
 import { pageCardInner, pageCardShell } from '@/lib/pageCardClasses';
 import { hoverSurfaceBidex, textAccentBidex } from '@/lib/theme';
+import { useAppSelector } from '@/store/hooks';
+import { isSellerRole } from '@/lib/sellerAccess';
 
 interface LocationState {
   customer?: Customer;
@@ -31,6 +33,7 @@ async function fetchAllInvoicesForCustomer(buyerName: string, buyerPhone: string
 }
 
 export function CustomerDetailPage() {
+  const isSeller = isSellerRole(useAppSelector((s) => s.auth.user?.role));
   const { buyerName: buyerNameParam } = useParams<{ buyerName: string }>();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -122,12 +125,16 @@ export function CustomerDetailPage() {
                       {Number(inv.total).toLocaleString('ar-EG', { minimumFractionDigits: 2 })}
                     </td>
                     <td className="py-2.5 px-4 text-left">
-                      <Link
-                        to={`/invoices/${inv.id}`}
-                        className={`rounded-lg px-3 py-1.5 text-sm font-medium ${textAccentBidex} ${hoverSurfaceBidex}`}
-                      >
-                        عرض الفاتورة
-                      </Link>
+                      {isSeller ? (
+                        <span className="text-muted text-sm">—</span>
+                      ) : (
+                        <Link
+                          to={`/invoices/${inv.id}`}
+                          className={`rounded-lg px-3 py-1.5 text-sm font-medium ${textAccentBidex} ${hoverSurfaceBidex}`}
+                        >
+                          عرض الفاتورة
+                        </Link>
+                      )}
                     </td>
                   </tr>
                 ))}

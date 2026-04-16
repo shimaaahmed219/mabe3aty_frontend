@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getApiErrorMessage, invoicesApi, reportsApi } from '@/lib/api';
+import { appToast } from '@/lib/appToast';
 import { PageWrapper } from '@/components/PageWrapper';
 import { pageCardInner, pageCardShell } from '@/lib/pageCardClasses';
 import {
@@ -11,28 +13,46 @@ import {
 } from '@/lib/theme';
 
 const inputClass = `w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-[var(--input-border)] bg-white dark:bg-[var(--input-bg)] text-sm ${controlInputHover}`;
+type CreditFilter = 'all' | 'overdue' | 'due_soon';
 
-type ToastState = { type: 'success' | 'error'; message: string } | null;
+function parseFilterFromQuery(value: string | null): CreditFilter {
+  const v = (value || '').trim().toLowerCase();
+  if (['overdue', 'late', 'past_due', 'متاخر', 'متأخر'].includes(v)) return 'overdue';
+  if (['due_soon', 'soon', 'upcoming', 'قريب', 'قريب الاستحقاق', 'قريب_الاستحقاق'].includes(v)) return 'due_soon';
+  return 'all';
+}
 
 export function CreditDuesPage() {
+  const [searchParams] = useSearchParams();
+  const queryFilter = parseFilterFromQuery(searchParams.get('filter'));
+  const querySearch = searchParams.get('q') ?? '';
+  const queryInvoiceId = Number(searchParams.get('invoice_id') || 0) || null;
+  const querySort = (searchParams.get('sort') || '').toLowerCase();
   const queryClient = useQueryClient();
   const [paymentDrafts, setPaymentDrafts] = useState<Record<number, { amount: string; method: string }>>({});
-  const [filter, setFilter] = useState<'all' | 'overdue' | 'due_soon'>('all');
-  const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState<'due_date_asc' | 'due_date_desc' | 'remaining_desc' | 'remaining_asc'>('due_date_asc');
-  const [toast, setToast] = useState<ToastState>(null);
+  const [filter, setFilter] = useState<CreditFilter>(() => queryFilter);
+  const [search, setSearch] = useState(() => querySearch);
+  const [invoiceIdFilter, setInvoiceIdFilter] = useState<number | null>(() => queryInvoiceId);
+  const [sortBy, setSortBy] = useState<'due_date_asc' | 'due_date_desc' | 'remaining_desc' | 'remaining_asc'>(() => {
+    if (querySort === 'due_date_desc' || querySort === 'remaining_desc' || querySort === 'remaining_asc') return querySort;
+    return 'due_date_asc';
+  });
+
+  useEffect(() => {
+    setFilter(queryFilter);
+    setSearch(querySearch);
+    setInvoiceIdFilter(queryInvoiceId);
+    if (querySort === 'due_date_desc' || querySort === 'remaining_desc' || querySort === 'remaining_asc') {
+      setSortBy(querySort);
+    } else {
+      setSortBy('due_date_asc');
+    }
+  }, [queryFilter, querySearch, queryInvoiceId, querySort]);
 
   const { data: dues = [], isLoading, isFetching } = useQuery({
     queryKey: ['reports', 'credit-dues'],
     queryFn: () => reportsApi.creditDues().then((r) => r.data),
   });
-
-  useEffect(() => {
-    if (!toast) return;
-    const ms = toast.type === 'success' ? 4200 : 6000;
-    const t = window.setTimeout(() => setToast(null), ms);
-    return () => window.clearTimeout(t);
-  }, [toast]);
 
   const addPayment = useMutation({
     mutationFn: ({ invoiceId, amount, method }: { invoiceId: number; amount: number; method?: string }) =>
@@ -49,10 +69,10 @@ export function CreditDuesPage() {
       void queryClient.invalidateQueries({ queryKey: ['invoices'] });
       void queryClient.invalidateQueries({ queryKey: ['reports'] });
       void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      setToast({ type: 'success', message: 'تم تسجيل السداد وتحديث المبالغ في الصفحة.' });
+      appToast.success('تم تسجيل السداد', 'تم تحديث المبالغ في القائمة.');
     },
     onError: (err) => {
-      setToast({ type: 'error', message: getApiErrorMessage(err, 'فشل تسجيل التحصيل') });
+      appToast.error('فشل تسجيل التحصيل', getApiErrorMessage(err, 'تعذّر إرسال المبلغ إلى الخادم.'));
     },
   });
 
@@ -66,9 +86,10 @@ export function CreditDuesPage() {
   const today = new Date();
   const msInDay = 24 * 60 * 60 * 1000;
   const filteredDues = dues.filter((d) => {
+    if (invoiceIdFilter != null && d.id !== invoiceIdFilter) return false;
     const q = search.trim().toLowerCase();
     if (q) {
-      const haystack = `${d.invoice_number || ''} ${d.buyer_name || ''} ${d.buyer_phone || ''}`.toLowerCase();
+      const haystack = `${d.id} ${d.invoice_number || ''} ${d.buyer_name || ''} ${d.buyer_phone || ''}`.toLowerCase();
       if (!haystack.includes(q)) return false;
     }
     if (!d.due_date) return filter === 'all';
@@ -131,28 +152,6 @@ export function CreditDuesPage() {
 
   return (
     <PageWrapper>
-      {toast && (
-        <div
-          role="status"
-          className={`fixed bottom-6 left-1/2 z-[100] max-w-[min(92vw,24rem)] -translate-x-1/2 rounded-2xl px-4 py-3 text-sm font-medium shadow-lg border ${
-            toast.type === 'success'
-              ? 'border-[var(--bidex-primary)] bg-[var(--bidex-primary)] text-white'
-              : 'bg-red-600 text-white border-red-500'
-          }`}
-        >
-          <div className="flex items-start gap-3">
-            <p className="flex-1 text-right leading-relaxed">{toast.message}</p>
-            <button
-              type="button"
-              onClick={() => setToast(null)}
-              className="shrink-0 rounded-lg px-2 py-0.5 text-xs opacity-90 hover:opacity-100 hover:bg-white/15"
-              aria-label="إغلاق"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
       <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>إدارة الديون والتحصيل</h1>
       {isFetching && !isLoading && (
         <p className="text-xs text-muted mb-2" aria-live="polite">جاري تحديث القائمة…</p>

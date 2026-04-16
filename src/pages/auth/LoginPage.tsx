@@ -3,7 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch } from '@/store/hooks';
 import { setAuth } from '@/store/slices/authSlice';
 import { authApi, getApiErrorMessage } from '@/lib/api';
+import { isSellerRole, SELLER_HOME_PATH } from '@/lib/sellerAccess';
 import { reportFormValidity } from '@/lib/formValidation';
+import { appToast } from '@/lib/appToast';
 import { AuthShell, authInputClass } from './AuthShell';
 import { PasswordField } from './PasswordField';
 
@@ -26,9 +28,11 @@ export function LoginPage() {
     try {
       const { data } = await authApi.login(email, password);
       dispatch(setAuth({ user: data.user, token: data.token }));
-      navigate('/');
+      navigate(isSellerRole(data.user.role) ? SELLER_HOME_PATH : '/');
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err, 'فشل تسجيل الدخول'));
+      const msg = getApiErrorMessage(err, 'فشل تسجيل الدخول');
+      setError(msg);
+      appToast.error('تعذّر تسجيل الدخول', msg);
     } finally {
       setLoading(false);
     }

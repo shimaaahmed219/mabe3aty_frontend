@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { authApi } from '@/lib/api';
+import { authApi, getApiErrorMessage } from '@/lib/api';
+import { appToast } from '@/lib/appToast';
 import { reportFormValidity } from '@/lib/formValidation';
 import { pageCardInner } from '@/lib/pageCardClasses';
 import { btnPrimarySolid, controlInputHover, textAccentBidex } from '@/lib/theme';
 import { AuthDecoratedPage } from './AuthShell';
+import { PasswordField } from './PasswordField';
 
 const authCardShell =
   'w-full max-w-[420px] rounded-2xl border border-card bg-card shadow-xl overflow-hidden';
@@ -29,19 +31,25 @@ export function ResetPasswordPage() {
     setMessage('');
     if (password !== passwordConfirmation) {
       setError('كلمة المرور غير متطابقة');
+      appToast.warning('كلمة المرور غير متطابقة', 'تأكد من تطابق الحقلين.');
       return;
     }
     if (!token) {
-      setError('رابط غير صالح. اطلب رابطاً جديداً من صفحة نسيت كلمة المرور.');
+      const msg = 'رابط غير صالح. اطلب رابطاً جديداً من صفحة نسيت كلمة المرور.';
+      setError(msg);
+      appToast.error('رابط غير صالح', msg);
       return;
     }
     setLoading(true);
     try {
       await authApi.resetPassword({ email, token, password, password_confirmation: passwordConfirmation });
       setMessage('تم تغيير كلمة المرور. يمكنك تسجيل الدخول الآن.');
+      appToast.success('تم تغيير كلمة المرور', 'سيتم تحويلك إلى تسجيل الدخول.');
       setTimeout(() => navigate('/login'), 2000);
-    } catch {
-      setError('رابط منتهي أو غير صالح. اطلب رابطاً جديداً.');
+    } catch (err: unknown) {
+      const msg = getApiErrorMessage(err, 'رابط منتهي أو غير صالح. اطلب رابطاً جديداً.');
+      setError(msg);
+      appToast.error('تعذّر إعادة التعيين', msg);
     } finally {
       setLoading(false);
     }
@@ -59,14 +67,22 @@ export function ResetPasswordPage() {
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">البريد الإلكتروني</label>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" className={inputClass} />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">كلمة المرور الجديدة</label>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" className={inputClass} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">تأكيد كلمة المرور</label>
-              <input type="password" value={passwordConfirmation} onChange={(e) => setPasswordConfirmation(e.target.value)} required autoComplete="new-password" className={inputClass} />
-            </div>
+            <PasswordField
+              id="reset-password"
+              label="كلمة المرور الجديدة"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+              inputClassName={inputClass}
+            />
+            <PasswordField
+              id="reset-password-confirm"
+              label="تأكيد كلمة المرور"
+              value={passwordConfirmation}
+              onChange={(e) => setPasswordConfirmation(e.target.value)}
+              autoComplete="new-password"
+              inputClassName={inputClass}
+            />
             {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
             {message && <p className={`text-sm ${textAccentBidex}`}>{message}</p>}
             <button type="submit" disabled={loading} className={btnPrimary}>{loading ? 'جاري الحفظ...' : 'حفظ كلمة المرور'}</button>

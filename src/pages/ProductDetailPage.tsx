@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -18,6 +18,7 @@ import {
 } from 'recharts';
 import { ArrowDownRight, ArrowRight, ArrowUpRight, Package } from 'lucide-react';
 import { getApiErrorMessage, productsApi } from '@/lib/api';
+import { appToast } from '@/lib/appToast';
 import { reportFormValidity } from '@/lib/formValidation';
 import type { Product, ProductBatchWriteInput, ProductStatsPayload, ProductStockBatch } from '@/lib/api';
 import { PageWrapper } from '@/components/PageWrapper';
@@ -53,6 +54,31 @@ function shelfLifeLabelBatch(b: ProductStockBatch): string | null {
     return `${v} ${v === 1 ? 'سنة' : 'سنوات'}`;
   }
   return null;
+}
+
+function toIsoDay(date: Date): string {
+  const y = date.getFullYear();
+  const m = `${date.getMonth() + 1}`.padStart(2, '0');
+  const d = `${date.getDate()}`.padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function computeExpiryDate(
+  productionDate: string,
+  shelfLifeValue: string,
+  shelfLifeUnit: 'days' | 'months' | 'years',
+): string {
+  if (!productionDate) return '';
+  const v = Number.parseInt(shelfLifeValue, 10);
+  if (!Number.isFinite(v) || v <= 0) return '';
+  const base = new Date(`${productionDate}T00:00:00`);
+  if (Number.isNaN(base.getTime())) return '';
+
+  if (shelfLifeUnit === 'days') base.setDate(base.getDate() + v);
+  else if (shelfLifeUnit === 'months') base.setMonth(base.getMonth() + v);
+  else base.setFullYear(base.getFullYear() + v);
+
+  return toIsoDay(base);
 }
 
 const PIE_COLORS = ['#093F85', '#94a3b8'];
@@ -105,6 +131,11 @@ export function ProductDetailPage() {
   const [batchNotes, setBatchNotes] = useState('');
   const [batchErr, setBatchErr] = useState('');
 
+  useEffect(() => {
+    const autoExpiry = computeExpiryDate(batchProd, batchShelfV, batchShelfU);
+    if (autoExpiry) setBatchExpiry(autoExpiry);
+  }, [batchProd, batchShelfV, batchShelfU]);
+
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['product-stats', productId, appliedRange?.from, appliedRange?.to],
     queryFn: () =>
@@ -128,8 +159,13 @@ export function ProductDetailPage() {
       setBatchNotes('');
       setBatchPurchase('');
       setBatchErr('');
+      appToast.success('تم تسجيل الدفعة', 'تم تحديث المخزون والإحصائيات.');
     },
-    onError: (e: unknown) => setBatchErr(getApiErrorMessage(e, 'تعذّر إضافة الدفعة')),
+    onError: (e: unknown) => {
+      const msg = getApiErrorMessage(e, 'تعذّر إضافة الدفعة');
+      setBatchErr(msg);
+      appToast.error('فشل إضافة الدفعة', msg);
+    },
   });
 
   const pieData = useMemo(() => {
@@ -154,7 +190,9 @@ export function ProductDetailPage() {
     if (!reportFormValidity(e.currentTarget)) return;
     const q = Number(batchQty);
     if (!Number.isFinite(q) || q <= 0) {
-      setBatchErr('أدخلي كمية صحيحة أكبر من صفر.');
+      const msg = 'أدخلي كمية صحيحة أكبر من صفر.';
+      setBatchErr(msg);
+      appToast.warning('كمية غير صالحة', msg);
       return;
     }
     setBatchErr('');
@@ -369,7 +407,7 @@ export function ProductDetailPage() {
           <div className="mt-6 border-t border-slate-100 pt-5 dark:border-slate-700">
             <h3 className="mb-2 text-sm font-semibold text-slate-800 dark:text-slate-200">إضافة دفعة جديدة</h3>
             <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
-              أدخلي الكمية مع تاريخ إنتاج و/أو تاريخ انتهاء أو مدة صلاحية من تاريخ الإنتاج (مثل المنتج الأساسي).
+              أدخلي الكمية وتاريخ الإنتاج، ثم اختاري مدة الصلاحية وسيتم ملء تاريخ الانتهاء تلقائيًا.
             </p>
             <form onSubmit={onSubmitBatch} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <div className="sm:col-span-1">

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { authApi } from '@/lib/api';
+import { authApi, getApiErrorMessage } from '@/lib/api';
+import { appToast } from '@/lib/appToast';
 import { reportFormValidity } from '@/lib/formValidation';
 import { pageCardInner } from '@/lib/pageCardClasses';
 import { btnPrimarySolid, controlInputHover, textAccentBidex } from '@/lib/theme';
@@ -26,8 +27,11 @@ export function ForgotPasswordPage() {
     try {
       await authApi.forgotPassword(email);
       setMessage('تم إرسال رابط استعادة كلمة المرور إلى بريدك الإلكتروني.');
-    } catch {
-      setError('لم نتمكن من إرسال الرابط. تحقق من البريد أو حاول لاحقاً.');
+      appToast.success('تم الإرسال', 'تحقق من صندوق الوارد أو الرسائل غير المرغوب فيها.');
+    } catch (err: unknown) {
+      const msg = getApiErrorMessage(err, 'لم نتمكن من إرسال الرابط. تحقق من البريد أو حاول لاحقاً.');
+      setError(msg);
+      appToast.error('تعذّر إرسال الرابط', msg);
     } finally {
       setLoading(false);
     }

@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Bell } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { notificationsApi } from '@/lib/api';
+import { resolveNotificationTarget } from '@/lib/notificationTarget';
 
 type Props = {
   open: boolean;
@@ -12,6 +13,7 @@ type Props = {
 
 export function HeaderNotificationsMenu({ open, onToggle, onClose }: Props) {
   const ref = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ['notifications', 'header-popover'],
@@ -21,9 +23,27 @@ export function HeaderNotificationsMenu({ open, onToggle, onClose }: Props) {
     },
     staleTime: 30_000,
   });
+  const { data: counts } = useQuery({
+    queryKey: ['notifications', 'count'],
+    queryFn: async () => {
+      const { data: body } = await notificationsApi.count();
+      return body;
+    },
+    staleTime: 15_000,
+    refetchInterval: 2_000,
+    refetchIntervalInBackground: true,
+  });
 
   const items = data?.data ?? [];
-  const unreadCount = data?.unread_count ?? 0;
+  const unreadCount = counts?.unread ?? data?.unread_count ?? 0;
+  const markRead = useMutation({
+    mutationFn: (id: number) => notificationsApi.markRead(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'header-popover'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'count'] });
+    },
+  });
 
   useEffect(() => {
     if (!open) return;
@@ -92,8 +112,13 @@ export function HeaderNotificationsMenu({ open, onToggle, onClose }: Props) {
               <ul className="divide-y" style={{ borderColor: 'var(--card-border)' }}>
                 {items.map((n) => (
                   <li key={n.id}>
-                    <div
-                      className={`px-3 py-2.5 text-start ${n.read_at ? '' : 'bg-muted-bg/80'}`}
+                    <Link
+                      to={resolveNotificationTarget(n)}
+                      onClick={() => {
+                        if (!n.read_at) markRead.mutate(n.id);
+                        onClose();
+                      }}
+                      className={`block px-3 py-2.5 text-start transition-colors hover:bg-sky-500/10 dark:hover:bg-sky-400/10 ${n.read_at ? '' : 'bg-muted-bg/80'}`}
                       style={{ color: 'var(--foreground)' }}
                     >
                       <p className="text-sm font-medium leading-snug line-clamp-2">{n.title}</p>
@@ -101,7 +126,7 @@ export function HeaderNotificationsMenu({ open, onToggle, onClose }: Props) {
                         <p className="mt-0.5 text-xs text-muted line-clamp-2">{n.message}</p>
                       ) : null}
                       <p className="mt-1 text-[11px] text-muted">{formatWhen(n.created_at)}</p>
-                    </div>
+                    </Link>
                   </li>
                 ))}
               </ul>

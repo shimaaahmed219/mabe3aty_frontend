@@ -3,7 +3,12 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Save, PackagePlus, Plus, Trash2, ScanLine } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getApiErrorMessage, invoicesApi, productsApi } from '@/lib/api';
-import { focusFirstFieldByValidationKeys, sortAddSaleValidationKeys } from '@/lib/formValidation';
+import {
+  ADD_SALE_FIELD_ID_PREFIX,
+  compareAddSaleErrorFieldKeys,
+  focusFirstFormErrorField,
+} from '@/lib/formValidation';
+import { appToast } from '@/lib/appToast';
 import { PageWrapper } from '@/components/PageWrapper';
 import { pageCardInner, pageCardShell } from '@/lib/pageCardClasses';
 import { useAppSelector } from '@/store/hooks';
@@ -102,6 +107,10 @@ export function AddSalePage() {
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['reports'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      appToast.success(
+        'تم حفظ الفاتورة بنجاح',
+        `رقم الفاتورة #${invoice.id} — الإجمالي ${Number(invoice.total ?? 0).toLocaleString('ar-EG', { minimumFractionDigits: 2 })} جنيه`,
+      );
       setLastSavedInvoiceId(invoice.id);
       setLastSavedPhone(buyerPhone);
       setLastSavedTotal(Number(invoice.total ?? 0));
@@ -123,10 +132,13 @@ export function AddSalePage() {
         const existing = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]') as unknown[];
         existing.push({ payload, created_at: new Date().toISOString() });
         localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(existing));
-        alert('تم حفظ الفاتورة محليًا وسيتم مزامنتها عند عودة الإنترنت.');
+        appToast.info(
+          'تم حفظ الفاتورة محليًا',
+          'سيتم إرسالها تلقائيًا عند عودة الاتصال بالإنترنت.',
+        );
         return;
       }
-      alert(getApiErrorMessage(err, 'فشل حفظ الفاتورة'));
+      appToast.error('فشل حفظ الفاتورة', getApiErrorMessage(err, 'تعذّر الإرسال إلى الخادم.'));
     },
   });
 
@@ -153,7 +165,7 @@ export function AddSalePage() {
       setBarcode('');
     },
     onError: () => {
-      alert('الباركود غير موجود في المنتجات.');
+      appToast.error('الباركود غير موجود', 'لا يوجد منتج بهذا الكود في القائمة.');
     },
   });
 
@@ -375,26 +387,22 @@ export function AddSalePage() {
 
     if (Object.keys(nextErrors).length > 0) {
       setFieldErrors(nextErrors);
-      const keys = Object.keys(nextErrors);
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          focusFirstFieldByValidationKeys(e.currentTarget, keys, sortAddSaleValidationKeys);
-        });
+      queueMicrotask(() => {
+        focusFirstFormErrorField(Object.keys(nextErrors), ADD_SALE_FIELD_ID_PREFIX, compareAddSaleErrorFieldKeys);
+        const sorted = Object.keys(nextErrors).sort(compareAddSaleErrorFieldKeys);
+        const first = sorted[0];
+        appToast.warning('بيانات ناقصة أو غير صحيحة', first ? nextErrors[first] : 'راجع الحقول المظللة ثم أعد المحاولة.');
       });
       return;
     }
     setFieldErrors({});
 
     if (items.length === 0) {
-      const emptyItemsErr = {
-        'line-0-desc': 'أضف صنفاً واحداً على الأقل: وصف، كمية أكبر من صفر، وسعر وحدة.',
-      };
-      setFieldErrors(emptyItemsErr);
-      setSubmitError('');
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          focusFirstFieldByValidationKeys(e.currentTarget, Object.keys(emptyItemsErr), sortAddSaleValidationKeys);
-        });
+      const msg = 'أضف صنفاً واحداً على الأقل: وصف، كمية أكبر من صفر، وسعر وحدة.';
+      setSubmitError(msg);
+      queueMicrotask(() => {
+        focusFirstFormErrorField(['line-0-desc'], ADD_SALE_FIELD_ID_PREFIX, compareAddSaleErrorFieldKeys);
+        appToast.warning('لا يمكن الحفظ', msg);
       });
       return;
     }
@@ -402,7 +410,10 @@ export function AddSalePage() {
     // تحقق من المخزون لكل صنف
     for (const item of items) {
       if (item.product && item.product.stock_quantity != null && item.quantity > item.product.stock_quantity) {
-        alert(`الكمية المطلوبة أكبر من المتاح في المخزون للمنتج: ${item.product.name}`);
+        appToast.warning(
+          'الكمية أكبر من المخزون',
+          `المنتج: ${item.product.name}. خفّض الكمية أو حدّث المخزون.`,
+        );
         return;
       }
     }
@@ -441,7 +452,11 @@ export function AddSalePage() {
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
       queryClient.invalidateQueries({ queryKey: ['reports'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      alert(failed.length === 0 ? 'تمت مزامنة كل الفواتير المحلية.' : `تمت المزامنة جزئيًا. المتبقي: ${failed.length}`);
+      if (failed.length === 0) {
+        appToast.success('تمت المزامنة', 'تم إرسال كل الفواتير المحفوظة محليًا.');
+      } else {
+        appToast.warning('مزامنة جزئية', `لم يُرسل ${failed.length} من الطلبات. سيُعاد المحاولة لاحقًا.`);
+      }
     } finally {
       setSyncingOffline(false);
     }
@@ -536,9 +551,9 @@ export function AddSalePage() {
                 <div className="min-w-0">
                   <label className={labelClass}>اسم المشتري</label>
                   <input
+                    id={`${ADD_SALE_FIELD_ID_PREFIX}buyerName`}
                     type="text"
                     value={buyerName}
-                    data-validation-field="buyerName"
                     onChange={(e) => {
                       setBuyerName(e.target.value);
                       clearField('buyerName');
@@ -551,9 +566,9 @@ export function AddSalePage() {
                 <div className="min-w-0">
                   <label className={labelClass}>رقم الهاتف</label>
                   <input
+                    id={`${ADD_SALE_FIELD_ID_PREFIX}buyerPhone`}
                     type="tel"
                     value={buyerPhone}
-                    data-validation-field="buyerPhone"
                     onChange={(e) => {
                       setBuyerPhone(e.target.value);
                       clearField('buyerPhone');
@@ -566,9 +581,9 @@ export function AddSalePage() {
                 <div className="min-w-0 sm:col-span-2">
                   <label className={labelClass}>عنوان المشتري</label>
                   <input
+                    id={`${ADD_SALE_FIELD_ID_PREFIX}buyerAddress`}
                     type="text"
                     value={buyerAddress}
-                    data-validation-field="buyerAddress"
                     onChange={(e) => {
                       setBuyerAddress(e.target.value);
                       clearField('buyerAddress');
@@ -616,8 +631,8 @@ export function AddSalePage() {
                         <div className="min-w-0 lg:col-span-5">
                           <label className={labelClass}>المنتج</label>
                           <select
+                            id={`${ADD_SALE_FIELD_ID_PREFIX}line-${index}-product`}
                             value={row.productId}
-                            data-validation-field={`line-${index}-product`}
                             onChange={(e) => {
                               handleProductChange(index, e.target.value === '' ? '' : Number(e.target.value));
                               clearField(`line-${index}-product`);
@@ -642,8 +657,8 @@ export function AddSalePage() {
                         <div className="min-w-0 lg:col-span-4">
                           <label className={labelClass}>نوع البيع</label>
                           <select
+                            id={`${ADD_SALE_FIELD_ID_PREFIX}line-${index}-saleType`}
                             value={row.saleType}
-                            data-validation-field={`line-${index}-saleType`}
                             onChange={(e) => {
                               handleRowChange(index, 'saleType', e.target.value);
                               clearField(`line-${index}-saleType`);
@@ -659,11 +674,11 @@ export function AddSalePage() {
                         <div className="min-w-0 lg:col-span-3">
                           <label className={labelClass}>الكمية</label>
                           <input
+                            id={`${ADD_SALE_FIELD_ID_PREFIX}line-${index}-qty`}
                             type="number"
                             min={0.01}
                             step={0.01}
                             value={row.quantity}
-                            data-validation-field={`line-${index}-qty`}
                             onChange={(e) => {
                               handleRowChange(index, 'quantity', Number(e.target.value) || 0);
                               clearField(`line-${index}-qty`);
@@ -676,11 +691,11 @@ export function AddSalePage() {
                         <div className="min-w-0 lg:col-span-6">
                           <label className={labelClass}>السعر (جنيه)</label>
                           <input
+                            id={`${ADD_SALE_FIELD_ID_PREFIX}line-${index}-price`}
                             type="number"
                             min={0}
                             step={0.01}
                             value={row.unitPrice}
-                            data-validation-field={`line-${index}-price`}
                             onChange={(e) => {
                               handleRowChange(index, 'unitPrice', e.target.value);
                               clearField(`line-${index}-price`);
@@ -692,11 +707,11 @@ export function AddSalePage() {
                         <div className="min-w-0 lg:col-span-6">
                           <label className={labelClass}>خصم الصنف (جنيه)</label>
                           <input
+                            id={`${ADD_SALE_FIELD_ID_PREFIX}line-${index}-discount`}
                             type="number"
                             min={0}
                             step={0.01}
                             value={row.lineDiscount}
-                            data-validation-field={`line-${index}-discount`}
                             onChange={(e) => {
                               handleRowChange(index, 'lineDiscount', e.target.value);
                               clearField(`line-${index}-discount`);
@@ -710,8 +725,8 @@ export function AddSalePage() {
                         <div className="min-w-0 lg:col-span-12">
                           <label className={labelClass}>الوصف / اسم المنتج</label>
                           <textarea
+                            id={`${ADD_SALE_FIELD_ID_PREFIX}line-${index}-desc`}
                             value={row.description}
-                            data-validation-field={`line-${index}-desc`}
                             onChange={(e) => {
                               handleRowChange(index, 'description', e.target.value);
                               clearField(`line-${index}-desc`);
@@ -742,11 +757,11 @@ export function AddSalePage() {
                 <div className="min-w-0">
                   <label className={labelClass}>خصم على الفاتورة (جنيه)</label>
                   <input
+                    id={`${ADD_SALE_FIELD_ID_PREFIX}invoiceDiscount`}
                     type="number"
                     min={0}
                     step={0.01}
                     value={invoiceDiscount}
-                    data-validation-field="invoiceDiscount"
                     onChange={(e) => {
                       setInvoiceDiscount(e.target.value);
                       clearField('invoiceDiscount');
@@ -759,11 +774,11 @@ export function AddSalePage() {
                 <div className="min-w-0">
                   <label className={labelClass}>نقاط مستبدلة</label>
                   <input
+                    id={`${ADD_SALE_FIELD_ID_PREFIX}redeemedPoints`}
                     type="number"
                     min={0}
                     step={1}
                     value={redeemedPoints}
-                    data-validation-field="redeemedPoints"
                     onChange={(e) => {
                       setRedeemedPoints(e.target.value);
                       clearField('redeemedPoints');
@@ -812,9 +827,9 @@ export function AddSalePage() {
               <div className="min-w-0 max-w-md">
                 <label className={labelClass}>تاريخ البيع</label>
                 <input
+                  id={`${ADD_SALE_FIELD_ID_PREFIX}saleDate`}
                   type="date"
                   value={saleDate}
-                  data-validation-field="saleDate"
                   onChange={(e) => {
                     setSaleDate(e.target.value);
                     clearField('saleDate');
@@ -827,8 +842,8 @@ export function AddSalePage() {
                 <div className="min-w-0">
                   <label className={labelClass}>حالة الدفع</label>
                   <select
+                    id={`${ADD_SALE_FIELD_ID_PREFIX}paymentStatus`}
                     value={paymentStatus}
-                    data-validation-field="paymentStatus"
                     onChange={(e) => {
                       setPaymentStatus(e.target.value as typeof paymentStatus);
                       clearField('paymentStatus');
@@ -844,8 +859,8 @@ export function AddSalePage() {
                 <div className="min-w-0">
                   <label className={labelClass}>طريقة الدفع</label>
                   <select
+                    id={`${ADD_SALE_FIELD_ID_PREFIX}paymentMode`}
                     value={paymentMode}
-                    data-validation-field="paymentMode"
                     onChange={(e) => {
                       setPaymentMode(e.target.value as 'cash' | 'installment');
                       clearField('paymentMode');
@@ -860,9 +875,9 @@ export function AddSalePage() {
                 <div className="min-w-0 sm:col-span-2">
                   <label className={labelClass}>تفاصيل إضافية لطريقة الدفع (اختياري)</label>
                   <input
+                    id={`${ADD_SALE_FIELD_ID_PREFIX}paymentMethodDetail`}
                     type="text"
                     value={paymentMethodDetail}
-                    data-validation-field="paymentMethodDetail"
                     onChange={(e) => {
                       setPaymentMethodDetail(e.target.value);
                       clearField('paymentMethodDetail');
@@ -879,9 +894,9 @@ export function AddSalePage() {
                         تاريخ الاستحقاق <span className="text-red-600 dark:text-red-400">*</span>
                       </label>
                       <input
+                        id={`${ADD_SALE_FIELD_ID_PREFIX}dueDate`}
                         type="date"
                         value={dueDate}
-                        data-validation-field="dueDate"
                         onChange={(e) => {
                           setDueDate(e.target.value);
                           clearField('dueDate');
@@ -896,11 +911,11 @@ export function AddSalePage() {
                         {paymentStatus !== 'paid' && <span className="text-red-600 dark:text-red-400">*</span>}
                       </label>
                       <input
+                        id={`${ADD_SALE_FIELD_ID_PREFIX}paidAmount`}
                         type="number"
                         min={0}
                         step={0.01}
                         value={paidAmount}
-                        data-validation-field="paidAmount"
                         onChange={(e) => {
                           setPaidAmount(e.target.value);
                           clearField('paidAmount');
@@ -941,11 +956,11 @@ export function AddSalePage() {
                   <div className="min-w-0 sm:col-span-2">
                     <label className={labelClass}>المبلغ المدفوع الآن (اختياري)</label>
                     <input
+                      id={`${ADD_SALE_FIELD_ID_PREFIX}paidAmount`}
                       type="number"
                       min={0}
                       step={0.01}
                       value={paidAmount}
-                      data-validation-field="paidAmount"
                       onChange={(e) => {
                         setPaidAmount(e.target.value);
                         clearField('paidAmount');

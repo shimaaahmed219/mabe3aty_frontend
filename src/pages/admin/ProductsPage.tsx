@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Pencil, Trash2, BarChart3 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { productsApi } from '@/lib/api';
+import { getApiErrorMessage, productsApi } from '@/lib/api';
+import { appToast } from '@/lib/appToast';
 import { reportFormValidity } from '@/lib/formValidation';
 import { PageWrapper } from '@/components/PageWrapper';
 import type { Product, ProductUpdatePayload } from '@/lib/api';
@@ -120,6 +121,10 @@ export function ProductsPage() {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       setOpen(false);
       resetForm();
+      appToast.success('تم إضافة المنتج');
+    },
+    onError: (err: unknown) => {
+      appToast.error('فشل إضافة المنتج', getApiErrorMessage(err, 'تعذّر الحفظ.'));
     },
   });
 
@@ -131,6 +136,10 @@ export function ProductsPage() {
       setEditing(null);
       setOpen(false);
       resetForm();
+      appToast.success('تم تحديث المنتج');
+    },
+    onError: (err: unknown) => {
+      appToast.error('فشل التحديث', getApiErrorMessage(err, 'تعذّر حفظ التعديلات.'));
     },
   });
 
@@ -139,6 +148,10 @@ export function ProductsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      appToast.success('تم حذف المنتج');
+    },
+    onError: (err: unknown) => {
+      appToast.error('فشل الحذف', getApiErrorMessage(err, 'تعذّر حذف المنتج.'));
     },
   });
 

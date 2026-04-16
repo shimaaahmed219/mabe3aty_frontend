@@ -12,6 +12,9 @@ type PasswordFieldProps = {
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
   autoComplete: string;
   placeholder?: string;
+  /** إن وُجد يُستخدم بدل `authInputClass` (مثل نماذج الإدارة بنفس ستايل الصفحة) */
+  inputClassName?: string;
+  required?: boolean;
 };
 
 export function PasswordField({
@@ -21,8 +24,11 @@ export function PasswordField({
   onChange,
   autoComplete,
   placeholder = '••••••••',
+  inputClassName,
+  required = true,
 }: PasswordFieldProps) {
   const [visible, setVisible] = useState(false);
+  const fieldClass = `${inputClassName ?? authInputClass} pe-11`;
 
   return (
     <div className="space-y-1.5">
@@ -35,10 +41,10 @@ export function PasswordField({
           type={visible ? 'text' : 'password'}
           value={value}
           onChange={onChange}
-          required
+          required={required}
           autoComplete={autoComplete}
           placeholder={placeholder}
-          className={`${authInputClass} pe-11`}
+          className={fieldClass}
         />
         <button
           type="button"
