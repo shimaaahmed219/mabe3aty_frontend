@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getApiErrorMessage, invoicesApi, reportsApi } from '@/lib/api';
 import { appToast } from '@/lib/appToast';
@@ -12,13 +13,41 @@ import {
 } from '@/lib/theme';
 
 const inputClass = `w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-[var(--input-border)] bg-white dark:bg-[var(--input-bg)] text-sm ${controlInputHover}`;
+type CreditFilter = 'all' | 'overdue' | 'due_soon';
+
+function parseFilterFromQuery(value: string | null): CreditFilter {
+  const v = (value || '').trim().toLowerCase();
+  if (['overdue', 'late', 'past_due', 'متاخر', 'متأخر'].includes(v)) return 'overdue';
+  if (['due_soon', 'soon', 'upcoming', 'قريب', 'قريب الاستحقاق', 'قريب_الاستحقاق'].includes(v)) return 'due_soon';
+  return 'all';
+}
 
 export function CreditDuesPage() {
+  const [searchParams] = useSearchParams();
+  const queryFilter = parseFilterFromQuery(searchParams.get('filter'));
+  const querySearch = searchParams.get('q') ?? '';
+  const queryInvoiceId = Number(searchParams.get('invoice_id') || 0) || null;
+  const querySort = (searchParams.get('sort') || '').toLowerCase();
   const queryClient = useQueryClient();
   const [paymentDrafts, setPaymentDrafts] = useState<Record<number, { amount: string; method: string }>>({});
-  const [filter, setFilter] = useState<'all' | 'overdue' | 'due_soon'>('all');
-  const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState<'due_date_asc' | 'due_date_desc' | 'remaining_desc' | 'remaining_asc'>('due_date_asc');
+  const [filter, setFilter] = useState<CreditFilter>(() => queryFilter);
+  const [search, setSearch] = useState(() => querySearch);
+  const [invoiceIdFilter, setInvoiceIdFilter] = useState<number | null>(() => queryInvoiceId);
+  const [sortBy, setSortBy] = useState<'due_date_asc' | 'due_date_desc' | 'remaining_desc' | 'remaining_asc'>(() => {
+    if (querySort === 'due_date_desc' || querySort === 'remaining_desc' || querySort === 'remaining_asc') return querySort;
+    return 'due_date_asc';
+  });
+
+  useEffect(() => {
+    setFilter(queryFilter);
+    setSearch(querySearch);
+    setInvoiceIdFilter(queryInvoiceId);
+    if (querySort === 'due_date_desc' || querySort === 'remaining_desc' || querySort === 'remaining_asc') {
+      setSortBy(querySort);
+    } else {
+      setSortBy('due_date_asc');
+    }
+  }, [queryFilter, querySearch, queryInvoiceId, querySort]);
 
   const { data: dues = [], isLoading, isFetching } = useQuery({
     queryKey: ['reports', 'credit-dues'],
@@ -57,9 +86,10 @@ export function CreditDuesPage() {
   const today = new Date();
   const msInDay = 24 * 60 * 60 * 1000;
   const filteredDues = dues.filter((d) => {
+    if (invoiceIdFilter != null && d.id !== invoiceIdFilter) return false;
     const q = search.trim().toLowerCase();
     if (q) {
-      const haystack = `${d.invoice_number || ''} ${d.buyer_name || ''} ${d.buyer_phone || ''}`.toLowerCase();
+      const haystack = `${d.id} ${d.invoice_number || ''} ${d.buyer_name || ''} ${d.buyer_phone || ''}`.toLowerCase();
       if (!haystack.includes(q)) return false;
     }
     if (!d.due_date) return filter === 'all';

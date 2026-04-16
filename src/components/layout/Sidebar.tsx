@@ -47,13 +47,13 @@ const sections = [
   { title: 'الدعم', keys: ['/conversations', '/notifications'] },
 ] as const;
 
-const sellerMenuItems = [
-  { to: '/sales/new', label: 'إضافة عملية بيع', icon: ShoppingCart, isNew: true as const },
+const sellerMenuItems: Array<{ to: string; label: string; icon: typeof ShoppingCart; isNew?: boolean }> = [
+  { to: '/sales/new', label: 'إضافة عملية بيع', icon: ShoppingCart, isNew: true },
   { to: '/conversations', label: 'واتساب العملاء', icon: MessageCircle },
   { to: '/products', label: 'الأصناف', icon: Package },
   { to: '/customers', label: 'العملاء', icon: Users },
   { to: '/loyalty', label: 'نقاط العملاء', icon: BadgePercent },
-] as const;
+];
 
 const sidebarContentClass =
   'h-full flex flex-col bg-card border border-card rounded-2xl shadow-[0_12px_35px_rgba(15,23,42,0.08)] transition-all duration-300 dark:shadow-[0_8px_24px_rgba(0,0,0,0.25)] hover:border-sky-400/35 hover:shadow-[0_16px_42px_rgba(14,116,218,0.14)] dark:hover:border-sky-400/30 dark:hover:shadow-[0_12px_40px_rgba(0,0,0,0.35)] motion-reduce:transition-colors';

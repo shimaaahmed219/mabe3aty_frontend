@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getApiErrorMessage, invoicesApi } from '@/lib/api';
@@ -10,6 +10,7 @@ import { useState } from 'react';
 
 export function InvoiceDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const [payAmount, setPayAmount] = useState('');
   const [payMethod, setPayMethod] = useState('');
@@ -33,6 +34,8 @@ export function InvoiceDetailPage() {
       appToast.error('فشل تسجيل الدفعة', getApiErrorMessage(err, 'تعذّر إرسال المبلغ.'));
     },
   });
+  const cameFromNotification = searchParams.get('from_notification') === '1';
+  const notifiedStatus = searchParams.get('payment_status');
 
   if (!id || isLoading || !invoice) {
     return (
@@ -49,6 +52,12 @@ export function InvoiceDetailPage() {
       </Link>
       <div className={pageCardShell}>
         <div className={`p-5 sm:p-6 ${pageCardInner}`}>
+          {cameFromNotification && (
+            <div className="mb-4 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900 dark:border-sky-800/60 dark:bg-sky-900/20 dark:text-sky-100">
+              تم فتح هذه الفاتورة من إشعار
+              {notifiedStatus ? ` — الحالة: ${notifiedStatus}` : ''}.
+            </div>
+          )}
           <div className="flex flex-wrap justify-between items-start gap-4 mb-4">
             <div>
               <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{invoice.invoice_number}</h1>

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Plus, Pencil, Trash2, FileText } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getApiErrorMessage, invoicesApi, productsApi } from '@/lib/api';
@@ -56,14 +56,38 @@ function lineItemTotal(i: InvoiceItem): number {
 }
 
 export function InvoicesPage() {
+  const [searchParams] = useSearchParams();
+  const queryFrom = searchParams.get('from') ?? '';
+  const queryTo = searchParams.get('to') ?? '';
+  const queryQ = searchParams.get('q') ?? '';
+  const queryPaymentStatusRaw = (searchParams.get('payment_status') || '').toLowerCase();
+  const queryProductId = Number(searchParams.get('product_id') || 0) || '';
   const user = useAppSelector((s) => s.auth.user);
   const queryClient = useQueryClient();
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
-  const [productId, setProductId] = useState<number | ''>('');
+  const [from, setFrom] = useState(queryFrom);
+  const [to, setTo] = useState(queryTo);
+  const [productId, setProductId] = useState<number | ''>(queryProductId);
+  const [search, setSearch] = useState(queryQ);
+  const [paymentStatus, setPaymentStatus] = useState<'all' | 'pending' | 'partial' | 'paid'>(
+    queryPaymentStatusRaw === 'pending' || queryPaymentStatusRaw === 'partial' || queryPaymentStatusRaw === 'paid'
+      ? queryPaymentStatusRaw
+      : 'all',
+  );
   const [editInvoice, setEditInvoice] = useState<Invoice | null>(null);
   const [editDate, setEditDate] = useState('');
   const [editNotes, setEditNotes] = useState('');
+
+  useEffect(() => {
+    setFrom(queryFrom);
+    setTo(queryTo);
+    setProductId(queryProductId);
+    setSearch(queryQ);
+    setPaymentStatus(
+      queryPaymentStatusRaw === 'pending' || queryPaymentStatusRaw === 'partial' || queryPaymentStatusRaw === 'paid'
+        ? queryPaymentStatusRaw
+        : 'all',
+    );
+  }, [queryFrom, queryTo, queryProductId, queryQ, queryPaymentStatusRaw]);
 
   const { data: products = [] } = useQuery({
     queryKey: ['products'],
@@ -105,7 +129,18 @@ export function InvoicesPage() {
     },
   });
 
-  const invoices = data?.data ?? [];
+  const invoices = (data?.data ?? []).filter((inv) => {
+    const q = search.trim().toLowerCase();
+    if (q) {
+      const haystack = `${inv.id} ${inv.invoice_number || ''} ${inv.buyer_name || ''} ${inv.buyer_phone || ''}`.toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+    if (paymentStatus !== 'all') {
+      const st = String(inv.payment_status || 'pending').toLowerCase();
+      if (st !== paymentStatus) return false;
+    }
+    return true;
+  });
 
   const openEdit = (inv: Invoice) => {
     setEditInvoice(inv);
@@ -140,6 +175,19 @@ export function InvoicesPage() {
         </div>
         <div className="space-y-4 p-4 sm:p-5">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="min-w-0 sm:col-span-2 lg:col-span-3">
+              <label className={labelClass} htmlFor="inv-filter-q">
+                بحث
+              </label>
+              <input
+                id="inv-filter-q"
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="رقم الفاتورة / اسم العميل / الهاتف"
+                className={inputClass}
+              />
+            </div>
             <div className="min-w-0">
               <label className={labelClass} htmlFor="inv-filter-from">
                 من تاريخ
@@ -182,6 +230,52 @@ export function InvoicesPage() {
                 ))}
               </select>
             </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setPaymentStatus('all')}
+              className={`rounded-xl border px-3 py-1.5 text-sm ${
+                paymentStatus === 'all'
+                  ? 'border-[var(--bidex-primary)] bg-[var(--bidex-primary)] text-white'
+                  : 'border-slate-300 bg-white text-slate-700 dark:border-[var(--card-border)] dark:bg-card dark:text-slate-300'
+              }`}
+            >
+              كل الحالات
+            </button>
+            <button
+              type="button"
+              onClick={() => setPaymentStatus('pending')}
+              className={`rounded-xl border px-3 py-1.5 text-sm ${
+                paymentStatus === 'pending'
+                  ? 'border-red-600 bg-red-600 text-white'
+                  : 'border-slate-300 bg-white text-slate-700 dark:border-[var(--card-border)] dark:bg-card dark:text-slate-300'
+              }`}
+            >
+              غير مدفوع
+            </button>
+            <button
+              type="button"
+              onClick={() => setPaymentStatus('partial')}
+              className={`rounded-xl border px-3 py-1.5 text-sm ${
+                paymentStatus === 'partial'
+                  ? 'border-amber-600 bg-amber-600 text-white'
+                  : 'border-slate-300 bg-white text-slate-700 dark:border-[var(--card-border)] dark:bg-card dark:text-slate-300'
+              }`}
+            >
+              مدفوع جزئي
+            </button>
+            <button
+              type="button"
+              onClick={() => setPaymentStatus('paid')}
+              className={`rounded-xl border px-3 py-1.5 text-sm ${
+                paymentStatus === 'paid'
+                  ? 'border-emerald-600 bg-emerald-600 text-white'
+                  : 'border-slate-300 bg-white text-slate-700 dark:border-[var(--card-border)] dark:bg-card dark:text-slate-300'
+              }`}
+            >
+              مدفوع بالكامل
+            </button>
           </div>
           <div className="flex flex-col gap-2 border-t border-card pt-4 sm:flex-row sm:flex-wrap">
             <Link
