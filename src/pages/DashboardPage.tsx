@@ -1,6 +1,7 @@
 import { PageWrapper } from '@/components/PageWrapper';
 import { Link } from 'react-router-dom';
 import { TopStatsRow } from '@/components/dashboard/TopStatsRow';
+import { SalesLimitCard } from '@/components/dashboard/SalesLimitCard';
 import { MonthlyRevenueChart } from '@/components/dashboard/MonthlyRevenueChart';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -165,6 +166,10 @@ export function DashboardPage() {
           totalRevenue={summary?.total_revenue ?? 0}
           adminKpis={adminKpisFormatted}
         />
+      </div>
+
+      <div className="dash-rise-delay-1">
+        <SalesLimitCard />
       </div>
 
       {isAdmin && dashboard?.expired_inventory && dashboard.expired_inventory.products_count > 0 && (

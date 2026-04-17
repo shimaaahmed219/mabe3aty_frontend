@@ -85,7 +85,7 @@ export function NearExpiryProductsPage() {
           )}
           {!isLoading && list.length > 0 && (
             <div className="overflow-hidden rounded-xl border border-slate-100 dark:border-slate-700/80">
-              <div className="overflow-x-auto" dir="ltr">
+              <div className="max-w-full overflow-x-auto overscroll-x-contain touch-pan-x" dir="ltr">
                 <table className="w-full min-w-[860px] border-collapse text-sm">
                   <thead>
                     <tr className={`${tableHeadClass} border-b border-slate-200/80 dark:border-slate-600/80`}>

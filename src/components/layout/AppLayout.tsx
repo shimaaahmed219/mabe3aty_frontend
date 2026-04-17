@@ -26,9 +26,9 @@ export function AppLayout() {
 
   return (
     <>
-      <Header onMenuClick={() => setSidebarOpen(true)} />
-      <div className="w-full min-h-screen bg-[var(--background)] pb-16 md:pb-6">
-        <div className="max-w-[1700px] mx-auto px-3 sm:px-5 lg:px-6 py-3 sm:py-4 mt-14 md:mt-16">
+      <Header />
+      <div className="w-full min-h-screen bg-[var(--background)] pb-6">
+        <div className="max-w-[1700px] mx-auto px-3 sm:px-5 lg:px-6 py-3 sm:py-4 mt-16 sm:mt-[4.5rem]">
           <div className="flex gap-3 sm:gap-4">
             <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
             <main className="flex-1 min-w-0 bg-[var(--background)]">

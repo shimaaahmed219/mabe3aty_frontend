@@ -305,7 +305,7 @@ export function ProductsPage() {
             </div>
           ) : (
             <div className="overflow-hidden rounded-xl border border-slate-100 dark:border-slate-700/80">
-              <div className="overflow-x-auto" dir="ltr">
+              <div className="max-w-full overflow-x-auto overscroll-x-contain touch-pan-x" dir="ltr">
                 <table
                   className={`w-full border-collapse text-sm ${isAdmin ? 'min-w-[1080px]' : 'min-w-[820px]'}`}
                 >

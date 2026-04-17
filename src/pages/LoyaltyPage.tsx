@@ -58,7 +58,7 @@ export function LoyaltyPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="بحث باسم العميل أو الهاتف"
-          className={`min-w-[240px] ${toolbarInputClassWithFocus}`}
+          className={`w-full min-w-0 sm:min-w-[240px] ${toolbarInputClassWithFocus}`}
         />
         <select
           value={sortBy}
@@ -80,7 +80,7 @@ export function LoyaltyPage() {
         ) : filtered.length === 0 ? (
           <div className="p-6 text-muted">لا توجد بيانات نقاط حتى الآن.</div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="max-w-full overflow-x-auto overscroll-x-contain touch-pan-x">
             <table className="w-full min-w-[700px] text-sm">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-slate-700">
