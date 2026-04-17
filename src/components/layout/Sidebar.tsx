@@ -15,6 +15,7 @@ import {
   ChevronRight,
   CalendarClock,
   LogOut,
+  Target,
 } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { useAppSelector } from '@/store/hooks';
@@ -28,6 +29,7 @@ const menuItems = [
   { to: '/products', label: 'إدخال المنتجات', icon: Package },
   { to: '/products/near-expiry', label: 'قرب انتهاء الصلاحية', icon: CalendarClock },
   { to: '/reports', label: 'التقارير', icon: BarChart2 },
+  { to: '/sales-limits', label: 'ضبط هدف المبيعات', icon: Target },
   { to: '/credit-dues', label: 'الديون والتحصيل', icon: Wallet },
   { to: '/loyalty', label: 'نقاط العملاء', icon: BadgePercent },
   { to: '/customers', label: 'العملاء', icon: Users },
@@ -43,7 +45,7 @@ const adminItems = [
 const sections = [
   { title: 'الرئيسية', keys: ['/'] },
   { title: 'المبيعات', keys: ['/sales/new', '/invoices', '/products', '/products/near-expiry'] },
-  { title: 'التحليلات', keys: ['/reports', '/credit-dues', '/loyalty', '/customers'] },
+  { title: 'التحليلات', keys: ['/reports', '/sales-limits', '/credit-dues', '/loyalty', '/customers'] },
   { title: 'الدعم', keys: ['/conversations', '/notifications'] },
 ] as const;
 
@@ -53,6 +55,7 @@ const sellerMenuItems: Array<{ to: string; label: string; icon: typeof ShoppingC
   { to: '/products', label: 'الأصناف', icon: Package },
   { to: '/customers', label: 'العملاء', icon: Users },
   { to: '/loyalty', label: 'نقاط العملاء', icon: BadgePercent },
+ // { to: '/sales-limits', label: 'هدف المبيعات', icon: Target },
 ];
 
 const sidebarContentClass =
@@ -230,12 +233,13 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
           onClick={onClose}
           aria-hidden
         />
-        <div className={`absolute top-12 right-0 h-[calc(100vh-3rem)] w-[280px] max-w-[90vw] p-2 transition-transform duration-200 ${open ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className={`absolute top-16 sm:top-[4.5rem] right-0 h-[calc(100vh-4rem)] min-h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)] sm:h-[calc(100vh-4.5rem)] sm:min-h-[calc(100vh-4.5rem)] sm:max-h-[calc(100vh-4.5rem)] w-[280px] max-w-[90vw] p-2 transition-transform duration-200 ${open ? 'translate-x-0' : 'translate-x-full'}`}>
           <SidebarContent showCloseButton onClose={onClose} />
         </div>
       </div>
 
-      <aside className="hidden lg:flex w-[240px] flex-shrink-0">
+      <div className="hidden lg:block w-[240px] flex-shrink-0" aria-hidden />
+      <aside className="hidden lg:flex fixed top-[4.5rem] right-6 z-30 w-[240px] h-[calc(100vh-5.5rem)]">
         <div className="w-full h-full">
           <SidebarContent showCloseButton={false} onClose={onClose} />
         </div>

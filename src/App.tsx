@@ -44,6 +44,9 @@ const CustomerDetailPage = lazy(() =>
 );
 const CreditDuesPage = lazy(() => import('./pages/CreditDuesPage').then((m) => ({ default: m.CreditDuesPage })));
 const LoyaltyPage = lazy(() => import('./pages/LoyaltyPage').then((m) => ({ default: m.LoyaltyPage })));
+const SalesLimitsManagePage = lazy(() =>
+  import('./pages/SalesLimitsManagePage').then((m) => ({ default: m.SalesLimitsManagePage })),
+);
 const ConversationsPage = lazy(() =>
   import('./pages/ConversationsPage').then((m) => ({ default: m.ConversationsPage })),
 );
@@ -116,6 +119,7 @@ function AppRoutes() {
             <Route path="invoices/new" element={<NewInvoicePage />} />
             <Route path="invoices/:id" element={<InvoiceDetailPage />} />
             <Route path="reports" element={<ReportsPage />} />
+            <Route path="sales-limits" element={<SalesLimitsManagePage />} />
             <Route path="customers" element={<CustomersPage />} />
             <Route path="customers/:buyerName" element={<CustomerDetailPage />} />
             <Route path="credit-dues" element={<CreditDuesPage />} />

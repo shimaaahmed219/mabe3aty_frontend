@@ -93,6 +93,14 @@ export const targetsApi = {
   delete: (id: number) => api.delete(`/targets/${id}`),
 };
 
+// Sales limits (new target API)
+export const salesLimitsApi = {
+  list: (params?: { user_id?: number }) => api.get<SalesLimit[] | Paginated<SalesLimit>>('/sales-limits', { params }),
+  create: (data: SalesLimitWriteInput) => api.post<SalesLimit>('/sales-limits', data),
+  update: (id: number, data: Partial<SalesLimitWriteInput>) => api.put<SalesLimit>(`/sales-limits/${id}`, data),
+  delete: (id: number) => api.delete(`/sales-limits/${id}`),
+};
+
 // Notifications
 export const notificationsApi = {
   list: (params?: { page?: number; per_page?: number }) =>
@@ -431,6 +439,26 @@ export interface Target {
   user_id?: number;
   target_amount: number;
   period_type: 'daily' | 'monthly';
+  period_start: string;
+}
+
+export interface SalesLimit {
+  id: number;
+  user_id?: number;
+  target_amount: number;
+  period_type: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  period_start: string;
+  created_at?: string;
+  updated_at?: string;
+  achieved_amount?: number;
+  current_sales?: number;
+  progress_percent?: number;
+}
+
+export interface SalesLimitWriteInput {
+  user_id?: number;
+  target_amount: number;
+  period_type: 'daily' | 'weekly' | 'monthly' | 'yearly';
   period_start: string;
 }
 

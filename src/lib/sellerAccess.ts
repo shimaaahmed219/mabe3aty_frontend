@@ -14,6 +14,7 @@ export function isPathAllowedForSeller(pathname: string): boolean {
   if (pathname === '/products' || /^\/products\/\d+$/.test(pathname)) return true;
   if (pathname === '/customers' || /^\/customers\/.+/.test(pathname)) return true;
   if (pathname === '/loyalty') return true;
+  if (pathname === '/sales-limits') return true;
   return false;
 }
 
