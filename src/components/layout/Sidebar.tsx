@@ -16,11 +16,12 @@ import {
   CalendarClock,
   LogOut,
   Target,
+  House,
 } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { useAppSelector } from '@/store/hooks';
 import { useLogout } from '@/hooks/useLogout';
-import { isSellerRole, isSellerProductsNavActive } from '@/lib/sellerAccess';
+import { isSellerRole, isSellerProductsNavActive, SELLER_HOME_PATH } from '@/lib/sellerAccess';
 
 const menuItems = [
   { to: '/', label: 'لوحة التحكم', icon: LayoutDashboard },
@@ -50,6 +51,7 @@ const sections = [
 ] as const;
 
 const sellerMenuItems: Array<{ to: string; label: string; icon: typeof ShoppingCart; isNew?: boolean }> = [
+  { to: SELLER_HOME_PATH, label: 'الصفحة الرئيسية', icon: House },
   { to: '/sales/new', label: 'إضافة عملية بيع', icon: ShoppingCart, isNew: true },
   { to: '/conversations', label: 'واتساب العملاء', icon: MessageCircle },
   { to: '/products', label: 'الأصناف', icon: Package },

@@ -47,6 +47,9 @@ const LoyaltyPage = lazy(() => import('./pages/LoyaltyPage').then((m) => ({ defa
 const SalesLimitsManagePage = lazy(() =>
   import('./pages/SalesLimitsManagePage').then((m) => ({ default: m.SalesLimitsManagePage })),
 );
+const SellerLandingPage = lazy(() =>
+  import('./pages/SellerLandingPage').then((m) => ({ default: m.SellerLandingPage })),
+);
 const ConversationsPage = lazy(() =>
   import('./pages/ConversationsPage').then((m) => ({ default: m.ConversationsPage })),
 );
@@ -114,6 +117,7 @@ function AppRoutes() {
             }
           >
             <Route index element={<DashboardPage />} />
+            <Route path="seller" element={<SellerLandingPage />} />
             <Route path="invoices" element={<InvoicesPage />} />
             <Route path="sales/new" element={<AddSalePage />} />
             <Route path="invoices/new" element={<NewInvoicePage />} />

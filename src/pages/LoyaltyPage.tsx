@@ -51,7 +51,7 @@ export function LoyaltyPage() {
 
   return (
     <PageWrapper>
-      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>نقاط العملاء (Loyalty)</h1>
+      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>نقاط العملاء</h1>
       <div className="mb-3 flex flex-wrap gap-2">
         <input
           type="text"

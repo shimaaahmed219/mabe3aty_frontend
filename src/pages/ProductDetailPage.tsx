@@ -329,7 +329,7 @@ export function ProductDetailPage() {
           )}
           {isAdmin && data.product.profit_on_sold_estimate != null && (
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">ربح تقديري (مباع × الهامش)</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">إجمالي الربح (هامش الوحدة × المباع)</p>
               <p className="text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-100">
                 {money(data.product.profit_on_sold_estimate)} جنيه
               </p>

@@ -44,6 +44,7 @@ export function Header() {
   const isSeller = isSellerRole(user?.role);
   const isAdmin = user?.role === 'admin';
   const sellerLinks = [
+    { to: SELLER_HOME_PATH, label: 'الصفحة الرئيسية' },
     { to: '/sales/new', label: 'إضافة عملية بيع' },
     { to: '/conversations', label: 'واتساب العملاء' },
     { to: '/products', label: 'الأصناف' },
@@ -126,7 +127,7 @@ export function Header() {
         </div>
         <Link
           to={isSeller ? SELLER_HOME_PATH : '/'}
-          aria-label={isSeller ? 'مبيعاتي — إضافة عملية بيع' : 'مبيعاتي — لوحة التحكم'}
+          aria-label={isSeller ? 'مبيعاتي — الصفحة الرئيسية للبائع' : 'مبيعاتي — لوحة التحكم'}
           className="flex items-center gap-2 min-w-0 rounded-lg border border-transparent px-1 py-0.5 no-underline transition-all duration-200 hover:scale-[1.02] hover:border-sky-400/45 hover:bg-sky-500/10 motion-reduce:hover:scale-100 dark:hover:border-sky-400/35 dark:hover:bg-sky-400/10"
         >
           <BrandWordmark variant="header" />

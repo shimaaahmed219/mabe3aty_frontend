@@ -320,7 +320,7 @@ export function ProductsPage() {
                       {isAdmin && (
                         <>
                           <th className="min-w-[5.5rem] px-3 py-4 text-right text-xs font-bold text-[var(--bidex-primary)] dark:text-sky-300">
-                            ربح (تقدير)
+                            إجمالي الربح
                           </th>
                           <th className="min-w-[4.5rem] px-3 py-4 text-right text-xs font-bold text-[var(--bidex-primary)] dark:text-sky-300">
                             هامش

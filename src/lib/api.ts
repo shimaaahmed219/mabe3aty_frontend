@@ -281,6 +281,7 @@ export interface Product {
   quantity_sold?: number;
   /** هامش الربح للوحدة = default_price − purchase_price (أدمن فقط) */
   unit_profit?: number | null;
+  /** إجمالي الربح التقديري = المباع × هامش الربح للوحدة (أدمن فقط) */
   profit_on_sold_estimate?: number | null;
   is_expired?: boolean;
   /** سالب إذا انتهت الصلاحية */

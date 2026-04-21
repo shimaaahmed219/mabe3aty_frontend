@@ -1,5 +1,5 @@
 /** Default landing for users with role `seller` (no dashboard). */
-export const SELLER_HOME_PATH = '/sales/new';
+export const SELLER_HOME_PATH = '/seller';
 
 export function isSellerRole(role: string | undefined): boolean {
   return role === 'seller';
@@ -9,6 +9,7 @@ export function isSellerRole(role: string | undefined): boolean {
  * Paths a normal seller may open. Anything else is redirected to {@link SELLER_HOME_PATH}.
  */
 export function isPathAllowedForSeller(pathname: string): boolean {
+  if (pathname === '/seller') return true;
   if (pathname === '/sales/new') return true;
   if (pathname === '/conversations' || pathname === '/conversation') return true;
   if (pathname === '/products' || /^\/products\/\d+$/.test(pathname)) return true;
