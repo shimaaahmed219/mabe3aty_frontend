@@ -45,17 +45,17 @@ export function AuthDecoratedPage({ children }: { children: ReactNode }) {
       <AuthThemeToggleButton />
 
       <div className="pointer-events-none absolute inset-0 z-0 bg-[var(--background)]" aria-hidden />
-      {/* الصورة تظهر من md فما فوق — على الشاشات الصغيرة خلفية لون + تدرّج فقط */}
-      <div className="pointer-events-none absolute inset-0 z-0 hidden md:block" style={heroLayerStyle} aria-hidden />
+      {/* الصورة تظهر تحت md فقط — من md وفوق تختفي */}
+      <div className="pointer-events-none absolute inset-0 z-0 md:hidden" style={heroLayerStyle} aria-hidden />
       <div
-        className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-br from-slate-900/18 via-slate-900/6 to-slate-900/14 dark:from-black/28 dark:via-black/14 dark:to-black/22 md:from-slate-900/35 md:via-slate-900/15 md:to-slate-900/30 md:dark:from-black/50 md:dark:via-black/30 md:dark:to-black/45"
+        className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-br from-slate-900/28 via-slate-900/10 to-slate-900/18 dark:from-black/35 dark:via-black/18 dark:to-black/28 md:from-slate-900/10 md:via-slate-900/4 md:to-slate-900/8 md:dark:from-black/15 md:dark:via-black/8 md:dark:to-black/12"
         aria-hidden
       />
 
       {/* min-h-0 + overflow-y-auto: ما يطلعش سكرول للصفحة كله لو الفورم طويل */}
       <div
         dir="ltr"
-        className="relative z-10 flex min-h-0 w-full flex-1 items-center justify-center overflow-x-hidden overflow-y-auto px-4 py-6 sm:px-6 sm:py-8 md:justify-end md:pe-28 lg:pe-36 xl:pe-44 2xl:pe-52"
+        className="relative z-10 flex min-h-0 w-full flex-1 items-center justify-center overflow-x-hidden overflow-y-auto px-4 py-6 sm:px-6 sm:py-8"
       >
         {children}
       </div>
@@ -74,7 +74,7 @@ type AuthShellProps = {
 export function AuthShell({ title, subtitle, activeTab, children, footer }: AuthShellProps) {
   return (
     <AuthDecoratedPage>
-      <div className="relative z-10 w-full max-w-[440px] shrink-0 md:ms-16 lg:ms-24 xl:ms-32 2xl:ms-40">
+      <div className="relative z-10 w-full max-w-[440px] shrink-0">
         <div className="overflow-hidden rounded-2xl border border-card bg-card shadow-xl">
           <div className="h-px w-full bg-gradient-to-l from-transparent via-[var(--bidex-primary)] to-transparent opacity-90" />
 

@@ -57,7 +57,7 @@ export function ResetPasswordPage() {
 
   return (
     <AuthDecoratedPage>
-      <div className="w-full max-w-[420px] shrink-0 md:ms-16 lg:ms-24 xl:ms-32 2xl:ms-40">
+      <div className="w-full max-w-[420px] shrink-0">
       <div className={authCardShell}>
         <div className="h-px w-full bg-gradient-to-l from-transparent via-[var(--bidex-primary)] to-transparent opacity-90" />
         <div className={`p-6 sm:p-8 ${pageCardInner}`}>
