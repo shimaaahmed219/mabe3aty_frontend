@@ -49,7 +49,7 @@ export function Header() {
     { to: '/conversations', label: 'واتساب العملاء' },
     { to: '/products', label: 'الأصناف' },
     { to: '/customers', label: 'العملاء' },
-    { to: '/loyalty', label: 'نقاط العملاء' },
+    { to: '/loyalty', label: 'العملاء الأعلى شراء' },
     { to: '/sales-limits', label: 'هدف المبيعات' },
   ];
   const mainLinks = [
@@ -61,7 +61,7 @@ export function Header() {
     { to: '/reports', label: 'التقارير' },
     { to: '/sales-limits', label: 'هدف المبيعات' },
     { to: '/credit-dues', label: 'الديون والتحصيل' },
-    { to: '/loyalty', label: 'نقاط العملاء' },
+    { to: '/loyalty', label: 'العملاء الأعلى شراء' },
     { to: '/customers', label: 'العملاء' },
     { to: '/conversations', label: 'واتساب العملاء' },
     { to: '/notifications', label: 'الإشعارات' },

@@ -20,7 +20,7 @@ const quickActions = [
   { to: '/conversations', label: 'واتساب العملاء', hint: 'تابع رسائل العملاء والردود.', icon: MessageCircle },
   { to: '/products', label: 'الأصناف', hint: 'راجع الأصناف المتاحة وحدّث بياناتها.', icon: Package },
   { to: '/customers', label: 'العملاء', hint: 'اعرض بيانات العملاء وسجل تعاملاتهم.', icon: Users },
-  { to: '/loyalty', label: 'نقاط العملاء', hint: 'تابع النقاط والمكافآت بسهولة.', icon: BadgePercent },
+  { to: '/loyalty', label: 'العملاء الأعلى شراء', hint: 'تابع أكثر العملاء شراء بسهولة.', icon: BadgePercent },
 ];
 
 const highlights = [

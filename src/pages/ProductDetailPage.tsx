@@ -321,7 +321,7 @@ export function ProductDetailPage() {
           )}
           {isAdmin && data.product.unit_profit != null && (
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">هامش الربح للوحدة</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">الربح للوحدة</p>
               <p className="text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-100">
                 {money(data.product.unit_profit)} جنيه
               </p>
@@ -329,7 +329,7 @@ export function ProductDetailPage() {
           )}
           {isAdmin && data.product.profit_on_sold_estimate != null && (
             <div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">إجمالي الربح (هامش الوحدة × المباع)</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">إجمالي الربح (ربح الوحدة × المباع)</p>
               <p className="text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-100">
                 {money(data.product.profit_on_sold_estimate)} جنيه
               </p>

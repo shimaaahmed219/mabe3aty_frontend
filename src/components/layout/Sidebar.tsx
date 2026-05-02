@@ -32,7 +32,7 @@ const menuItems = [
   { to: '/reports', label: 'التقارير', icon: BarChart2 },
   { to: '/sales-limits', label: 'ضبط هدف المبيعات', icon: Target },
   { to: '/credit-dues', label: 'الديون والتحصيل', icon: Wallet },
-  { to: '/loyalty', label: 'نقاط العملاء', icon: BadgePercent },
+  { to: '/loyalty', label: 'العملاء الأعلى شراء', icon: BadgePercent },
   { to: '/customers', label: 'العملاء', icon: Users },
   { to: '/conversations', label: 'واتساب العملاء', icon: MessageCircle },
   { to: '/notifications', label: 'الإشعارات', icon: Bell, badge: 0 },
@@ -56,7 +56,7 @@ const sellerMenuItems: Array<{ to: string; label: string; icon: typeof ShoppingC
   { to: '/conversations', label: 'واتساب العملاء', icon: MessageCircle },
   { to: '/products', label: 'الأصناف', icon: Package },
   { to: '/customers', label: 'العملاء', icon: Users },
-  { to: '/loyalty', label: 'نقاط العملاء', icon: BadgePercent },
+  { to: '/loyalty', label: 'العملاء الأعلى شراء', icon: BadgePercent },
  // { to: '/sales-limits', label: 'هدف المبيعات', icon: Target },
 ];
 

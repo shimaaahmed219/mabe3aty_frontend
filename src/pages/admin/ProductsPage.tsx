@@ -323,10 +323,10 @@ export function ProductsPage() {
                             إجمالي الربح
                           </th>
                           <th className="min-w-[4.5rem] px-3 py-4 text-right text-xs font-bold text-[var(--bidex-primary)] dark:text-sky-300">
-                            هامش
+                            الربح للوحدة
                           </th>
-                          <th className="min-w-[5rem] px-3 py-4 text-right text-xs font-bold text-[var(--bidex-primary)] dark:text-sky-300">
-                            شراء
+                          <th className="min-w-[5.5rem] px-3 py-4 text-right text-xs font-bold text-[var(--bidex-primary)] dark:text-sky-300">
+                            سعر الشراء
                           </th>
                         </>
                       )}
@@ -479,7 +479,7 @@ export function ProductsPage() {
                       className={inputClass}
                     />
                     <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                      يُستخدم لتقدير هامش الربح والمخزون المنتهي في التقارير.
+                      يُستخدم لتقدير الربح للوحدة والمخزون المنتهي في التقارير.
                     </p>
                   </div>
                 )}

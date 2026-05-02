@@ -69,9 +69,6 @@ export function CustomerDetailPage() {
         <div className="text-sm text-slate-600 dark:text-slate-400 space-y-0.5">
           {buyerPhone && <p>الهاتف: {buyerPhone}</p>}
           {buyerAddress && <p>العنوان: {buyerAddress}</p>}
-          <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
-            تُعرض كل الفواتير لنفس الاسم مع نفس رقم الهاتف (بعد توحيد الأرقام)، بغض النظر عن اختلاف العنوان في السجلات.
-          </p>
         </div>
       </div>
 

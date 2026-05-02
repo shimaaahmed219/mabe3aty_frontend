@@ -274,7 +274,7 @@ export function DashboardPage() {
       {loyaltyHighlight && (
         <div className={`${pageCardShellInteractive} dash-rise-delay-2 mb-3`}>
           <div className={`${pageCardInner} py-3 px-4`}>
-            <p className="text-sm font-semibold mb-2" style={{ color: 'var(--foreground)' }}>نقاط العملاء (Loyalty)</p>
+            <p className="text-sm font-semibold mb-2" style={{ color: 'var(--foreground)' }}>العملاء الأعلى شراء (Loyalty)</p>
             <div className="text-xs text-muted">
               أعلى عميل نقاطًا: <span style={{ color: 'var(--foreground)' }}>{loyaltyHighlight.buyer_name}</span>
               {' — '}

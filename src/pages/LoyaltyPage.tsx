@@ -7,7 +7,7 @@ import { outlineButtonInteractive, toolbarInputClassWithFocus } from '@/lib/them
 
 export function LoyaltyPage() {
   const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState<'available_desc' | 'available_asc' | 'sales_desc'>('available_desc');
+  const [sortBy, setSortBy] = useState<'available_desc' | 'available_asc' | 'sales_desc'>('sales_desc');
   const { data = [], isLoading } = useQuery({
     queryKey: ['reports', 'loyalty-summary'],
     queryFn: () => reportsApi.loyaltySummary().then((r) => r.data),
@@ -22,7 +22,10 @@ export function LoyaltyPage() {
       })
       .sort((a, b) => {
         if (sortBy === 'available_asc') return a.available_points - b.available_points;
-        if (sortBy === 'sales_desc') return b.total_sales - a.total_sales;
+        if (sortBy === 'sales_desc') {
+          const bySales = b.total_sales - a.total_sales;
+          return bySales !== 0 ? bySales : b.earned_points - a.earned_points;
+        }
         return b.available_points - a.available_points;
       });
   }, [data, search, sortBy]);
@@ -51,7 +54,7 @@ export function LoyaltyPage() {
 
   return (
     <PageWrapper>
-      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>نقاط العملاء</h1>
+      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4" style={{ color: 'var(--foreground)' }}>العملاء الأعلى شراء</h1>
       <div className="mb-3 flex flex-wrap gap-2">
         <input
           type="text"
@@ -65,9 +68,9 @@ export function LoyaltyPage() {
           onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
           className={toolbarInputClassWithFocus}
         >
+          <option value="sales_desc">إجمالي المشتريات: الأعلى أولاً (أعلى شراء)</option>
           <option value="available_desc">النقاط المتاحة: الأعلى أولاً</option>
           <option value="available_asc">النقاط المتاحة: الأقل أولاً</option>
-          <option value="sales_desc">المبيعات: الأعلى أولاً</option>
         </select>
         <button type="button" onClick={exportCsv} className={outlineButtonInteractive}>
           تصدير CSV
@@ -85,9 +88,9 @@ export function LoyaltyPage() {
               <thead>
                 <tr className="border-b border-slate-200 dark:border-slate-700">
                   <th className="text-right py-3 px-4">العميل</th>
-                  <th className="text-right py-3 px-4">المبيعات</th>
-                  <th className="text-right py-3 px-4">المكتسبة</th>
-                  <th className="text-right py-3 px-4">المستبدلة</th>
+                  <th className="text-right py-3 px-4">إجمالي المشتريات</th>
+                  <th className="text-right py-3 px-4">النقاط المكتسبة من الشراء</th>
+                  <th className="text-right py-3 px-4">المنتجات المستبدلة</th>
                   <th className="text-right py-3 px-4">المتاحة</th>
                 </tr>
               </thead>

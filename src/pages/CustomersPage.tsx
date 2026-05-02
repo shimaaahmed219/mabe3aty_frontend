@@ -23,7 +23,7 @@ export function CustomersPage() {
           <div className="p-6 sm:p-8 text-center text-slate-500 dark:text-slate-400">جاري التحميل...</div>
         ) : customers.length === 0 ? (
           <div className="p-6 sm:p-8 text-center text-slate-500 dark:text-slate-400">
-            لا يوجد عملاء بعد. قم بإضافة عمليات بيع ليظهر العملاء هنا.
+            لا يوجد عملاء بعد. سجّل مشتريات (فواتير) ليظهر العملاء هنا.
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -35,7 +35,7 @@ export function CustomersPage() {
                   <th className="text-right py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">العنوان</th>
                   <th className="text-right py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">إجمالي المشتريات</th>
                   <th className="text-right py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">عدد الفواتير</th>
-                  <th className="text-right py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">آخر عملية</th>
+                  <th className="text-right py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">آخر مشتريات</th>
                 </tr>
               </thead>
               <tbody>
